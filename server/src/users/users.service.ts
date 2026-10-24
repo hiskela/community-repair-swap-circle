@@ -55,4 +55,46 @@ async findByEmailForLogin(email: string) {
     .select('+password')
     .exec();
 }
+async saveEmailVerification(
+  userId: string,
+  tokenHash: string,
+  expiresAt: Date,
+) {
+  await this.userModel.updateOne(
+    { _id: userId },
+    {
+      $set: {
+        emailVerificationTokenHash: tokenHash,
+        emailVerificationTokenExpiresAt: expiresAt,
+      },
+    },
+  ).exec();
+}
+
+async findByVerificationTokenHash(tokenHash: string) {
+  return this.userModel
+    .findOne({
+      emailVerificationTokenHash: tokenHash,
+      emailVerificationTokenExpiresAt: { $gt: new Date() },
+      isEmailVerified: false,
+    })
+    .select('+emailVerificationTokenHash +emailVerificationTokenExpiresAt')
+    .exec();
+}
+
+async markEmailVerified(userId: string) {
+  return this.userModel.updateOne(
+    {
+      _id: userId,
+      isEmailVerified: false,
+    },
+    {
+      $set: { isEmailVerified: true },
+      $unset: {
+        emailVerificationTokenHash: '',
+        emailVerificationTokenExpiresAt: '',
+      },
+    },
+  ).exec();
+}
 }

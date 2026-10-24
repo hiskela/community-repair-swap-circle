@@ -27,6 +27,7 @@ async function bootstrap() {
     .setTitle('Community Repair & Swap Circle API')
     .setDescription('API documentation for the Community Repair & Swap Circle platform')
     .setVersion('1.0')
+.addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, swaggerConfig);

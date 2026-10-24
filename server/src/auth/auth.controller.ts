@@ -3,7 +3,7 @@ import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import { Get, Req, UseGuards } from '@nestjs/common';
+import { Get, Req, UseGuards, Query } from '@nestjs/common';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Request } from 'express';
 interface AuthenticatedRequest extends Request {
@@ -32,5 +32,18 @@ profile(@Req() request: AuthenticatedRequest) {
     email: request.user.email,
     role: request.user.role,
   };
+}
+@Post('request-verification')
+@UseGuards(JwtAuthGuard)
+requestVerification(@Req() request: AuthenticatedRequest) {
+  return this.authService.requestEmailVerification(
+    request.user.userId,
+    request.user.email,
+  );
+}
+
+@Post('verify-email')
+verifyEmail(@Query('token') token: string) {
+  return this.authService.verifyEmail(token);
 }
 }
