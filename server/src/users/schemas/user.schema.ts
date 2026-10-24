@@ -1,4 +1,3 @@
-
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 
@@ -34,11 +33,13 @@ export class User {
 
   @Prop({ default: false })
   isEmailVerified: boolean;
-@Prop({ type: String, select: false })
-emailVerificationTokenHash?: string;
+  @Prop({ type: String, select: false })
+  emailVerificationTokenHash?: string;
 
-@Prop({ type: Date, select: false })
-emailVerificationTokenExpiresAt?: Date;
+  @Prop({ type: Date, select: false })
+  emailVerificationTokenExpiresAt?: Date;
+  @Prop({ trim: true, maxlength: 120 })
+  location?: string;
   @Prop({ default: true })
   isActive: boolean;
 }

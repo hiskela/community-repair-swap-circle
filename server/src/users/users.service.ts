@@ -2,12 +2,14 @@
 import {
   ConflictException,
   Injectable,
+NotFoundException
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { User, UserDocument } from './schemas/user.schema';
 import { RegisterDto } from './dto/register.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class UsersService {
@@ -97,4 +99,48 @@ async markEmailVerified(userId: string) {
     },
   ).exec();
 }
+
+async getProfile(userId: string) {
+  const user = await this.userModel
+    .findById(userId)
+    .select('name email role location isEmailVerified isActive createdAt updatedAt')
+    .exec();
+
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  return user;
+}
+
+async updateProfile(
+  userId: string,
+  updateProfileDto: UpdateProfileDto,
+) {
+  const updates: Partial<UpdateProfileDto> = {};
+
+  if (updateProfileDto.name !== undefined) {
+    updates.name = updateProfileDto.name.trim();
+  }
+
+  if (updateProfileDto.location !== undefined) {
+    updates.location = updateProfileDto.location.trim();
+  }
+
+  const user = await this.userModel
+    .findByIdAndUpdate(
+      userId,
+      { $set: updates },
+      { new: true, runValidators: true }
+    )
+    .select('name email role location isEmailVerified isActive createdAt updatedAt')
+    .exec();
+
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  return user;
+}
+
 }
