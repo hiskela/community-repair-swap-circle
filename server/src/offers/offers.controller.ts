@@ -1,0 +1,61 @@
+import {
+  Body,
+  Controller,
+  Post,
+  Request,
+  Patch,
+  Param,
+  UseGuards,
+  Get,
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { CreateOfferDto } from './dto/create-offer.dto';
+import { OffersService } from './offers.service';
+
+@ApiTags('Offers')
+@ApiBearerAuth()
+@Controller('offers')
+@UseGuards(JwtAuthGuard)
+export class OffersController {
+  constructor(private readonly offersService: OffersService) {}
+
+  @Post()
+  @ApiOperation({ summary: 'Submit an offer on a listing' })
+  create(
+    @Body() createOfferDto: CreateOfferDto,
+    @Request() req: { user: { userId: string } },
+  ) {
+    return this.offersService.create(createOfferDto, req.user.userId);
+  }
+
+  @Get('sent')
+  @ApiOperation({ summary: 'View offers you submitted' })
+  findSent(@Request() req: { user: { userId: string } }) {
+    return this.offersService.findSent(req.user.userId);
+  }
+
+  @Get('received')
+  @ApiOperation({ summary: 'View offers on your listings' })
+  findReceived(@Request() req: { user: { userId: string } }) {
+    return this.offersService.findReceived(req.user.userId);
+  }
+
+  @Patch(':id/accept')
+  @ApiOperation({ summary: 'Accept an offer' })
+  accept(
+    @Param('id') id: string,
+    @Request() req: { user: { userId: string } },
+  ) {
+    return this.offersService.accept(id, req.user.userId);
+  }
+
+  @Patch(':id/reject')
+  @ApiOperation({ summary: 'Reject an offer' })
+  reject(
+    @Param('id') id: string,
+    @Request() req: { user: { userId: string } },
+  ) {
+    return this.offersService.reject(id, req.user.userId);
+  }
+}
