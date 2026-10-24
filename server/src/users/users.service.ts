@@ -49,4 +49,10 @@ export class UsersService {
       },
     };
   }
+async findByEmailForLogin(email: string) {
+  return this.userModel
+    .findOne({ email: email.trim().toLowerCase() })
+    .select('+password')
+    .exec();
+}
 }
