@@ -6,7 +6,7 @@ import {
 ForbiddenException
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { isValidObjectId, Model } from 'mongoose';
+import { isValidObjectId, Model, QueryFilter } from 'mongoose';
 import { UpdateListingDto } from './dto/update-listing.dto';
 import {
   Listing,
@@ -14,6 +14,9 @@ import {
   ListingStatus,
 } from './schemas/listing.schema';
 import { CreateListingDto } from './dto/create-listing.dto';
+import { SearchListingsDto } from './dto/search-listings.dto';
+
+
 @Injectable()
 export class ListingsService {
   constructor(
@@ -30,13 +33,77 @@ export class ListingsService {
     return listing;
   }
 
-  async findAll() {
-    return this.listingModel
-      .find({ status: ListingStatus.OPEN })
+ 
+async findAll(searchDto: SearchListingsDto) {
+  const {
+    keyword,
+    type,
+    category,
+    location,
+    page = 1,
+    limit = 10,
+  } = searchDto;
+
+  const filter: QueryFilter<ListingDocument> = {
+    status: ListingStatus.OPEN,
+  };
+
+  if (type) {
+    filter.type = type;
+  }
+
+  if (category?.trim()) {
+    filter.category = {
+      $regex: this.escapeRegex(category.trim()),
+      $options: 'i',
+    };
+  }
+
+  if (location?.trim()) {
+    filter.location = {
+      $regex: this.escapeRegex(location.trim()),
+      $options: 'i',
+    };
+  }
+
+  if (keyword?.trim()) {
+    const safeKeyword = this.escapeRegex(keyword.trim());
+
+    filter.$or = [
+      { title: { $regex: safeKeyword, $options: 'i' } },
+      { description: { $regex: safeKeyword, $options: 'i' } },
+    ];
+  }
+
+  const skip = (page - 1) * limit;
+
+  const [listings, total] = await Promise.all([
+    this.listingModel
+      .find(filter)
       .populate('owner', 'name')
       .sort({ createdAt: -1 })
-      .exec();
-  }
+      .skip(skip)
+      .limit(limit)
+      .exec(),
+
+    this.listingModel.countDocuments(filter).exec(),
+  ]);
+
+  return {
+    data: listings,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
+}
+
+private escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 
   async findOne(id: string) {
     if (!isValidObjectId(id)) {

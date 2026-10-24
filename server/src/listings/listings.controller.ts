@@ -9,6 +9,7 @@ import {
   UseGuards,
 Delete,
 Patch,
+Query
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -20,6 +21,7 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateListingDto } from './dto/create-listing.dto';
 import { ListingsService } from './listings.service';
 import { UpdateListingDto } from './dto/update-listing.dto';
+import { SearchListingsDto } from './dto/search-listings.dto';
 interface AuthenticatedRequest extends Request {
   user: {
     userId: string;
@@ -47,12 +49,12 @@ export class ListingsController {
     );
   }
 
-  @Get()
-  @ApiOperation({ summary: 'Browse open listings' })
-  findAll() {
-    return this.listingsService.findAll();
-  }
-
+ 
+@Get()
+@ApiOperation({ summary: 'Search and browse open listings' })
+findAll(@Query() searchDto: SearchListingsDto) {
+  return this.listingsService.findAll(searchDto);
+}
   @Get(':id')
   @ApiOperation({ summary: 'View an open listing' })
   findOne(@Param('id') id: string) {
