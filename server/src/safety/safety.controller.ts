@@ -7,6 +7,7 @@ import {
   Post,
   Req,
   UseGuards,
+Patch,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
@@ -14,7 +15,10 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { BlockUserDto } from './dto/block-user.dto';
 import { CreateReportDto } from './dto/create-report.dto';
 import { SafetyService } from './safety.service';
-
+import { Roles } from '../auth/decorators/roles.decorator';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { UserRole } from '../users/schemas/user.schema';
+import { ModerateReportDto } from './dto/moderate-report.dto';
 @ApiTags('Safety')
 @ApiBearerAuth()
 @Controller('safety')
@@ -59,4 +63,26 @@ export class SafetyController {
       (req.user as any).userId,
     );
   }
+@Get('admin/reports')
+@UseGuards(RolesGuard)
+@Roles(UserRole.ADMIN)
+findAllReports() {
+  return this.safetyService.findAllReports();
+}
+
+@Patch('admin/reports/:id')
+@UseGuards(RolesGuard)
+@Roles(UserRole.ADMIN)
+moderateReport(
+  @Param('id') id: string,
+  @Req() req: Request,
+  @Body() dto: ModerateReportDto,
+) {
+  return this.safetyService.moderateReport(
+    id,
+    (req.user as any).userId,
+    (req.user as any).role,
+    dto,
+  );
+}
 }

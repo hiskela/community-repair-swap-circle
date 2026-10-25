@@ -3,11 +3,14 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+ForbiddenException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { isValidObjectId, Model, Types } from 'mongoose';
 import { User } from '../users/schemas/user.schema';
 import { Block } from './schemas/block.schema';
+import { UserRole } from '../users/schemas/user.schema';
+import { ModerateReportDto } from './dto/moderate-report.dto';
 import {
   Report,
   ReportStatus,
@@ -117,4 +120,56 @@ export class SafetyService {
       .sort({ createdAt: -1 })
       .exec();
   }
+async findAllReports() {
+  return this.reportModel
+    .find()
+    .populate('reporter', 'name email')
+    .populate('reviewedBy', 'name')
+    .sort({ createdAt: -1 })
+    .exec();
+}
+
+async moderateReport(
+  reportId: string,
+  adminId: string,
+  adminRole: UserRole,
+  dto: ModerateReportDto,
+) {
+  if (adminRole !== UserRole.ADMIN) {
+    throw new ForbiddenException('Only administrators can moderate reports');
+  }
+
+  if (!isValidObjectId(reportId)) {
+    throw new BadRequestException('Invalid report ID');
+  }
+
+  if (
+    dto.status !== ReportStatus.REVIEWED &&
+    dto.status !== ReportStatus.DISMISSED
+  ) {
+    throw new BadRequestException(
+      'Report status must be reviewed or dismissed',
+    );
+  }
+
+  const report = await this.reportModel
+    .findByIdAndUpdate(
+      reportId,
+      {
+        status: dto.status,
+        adminNotes: dto.adminNotes,
+        reviewedBy: new Types.ObjectId(adminId),
+      },
+      { new: true, runValidators: true },
+    )
+    .populate('reporter', 'name email')
+    .populate('reviewedBy', 'name')
+    .exec();
+
+  if (!report) {
+    throw new NotFoundException('Report not found');
+  }
+
+  return report;
+}
 }
