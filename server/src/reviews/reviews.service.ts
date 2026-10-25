@@ -94,4 +94,36 @@ export class ReviewsService {
       .sort({ createdAt: -1 })
       .exec();
   }
+async getRatingSummary(userId: string) {
+  if (!isValidObjectId(userId)) {
+    throw new BadRequestException('Invalid user ID');
+  }
+
+  const result = await this.reviewModel.aggregate([
+    {
+      $match: {
+        reviewedUser: new Types.ObjectId(userId),
+      },
+    },
+    {
+      $group: {
+        _id: '$reviewedUser',
+        averageRating: { $avg: '$rating' },
+        totalReviews: { $sum: 1 },
+      },
+    },
+  ]);
+
+  if (result.length === 0) {
+    return {
+      averageRating: 0,
+      totalReviews: 0,
+    };
+  }
+
+  return {
+    averageRating: Math.round(result[0].averageRating * 10) / 10,
+    totalReviews: result[0].totalReviews,
+  };
+}
 }

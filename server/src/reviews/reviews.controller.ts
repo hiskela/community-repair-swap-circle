@@ -5,6 +5,7 @@ import {
   Post,
   Req,
   UseGuards,
+Param,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
@@ -33,7 +34,10 @@ export class ReviewsController {
       (req.user as any).userId,
     );
   }
-
+@Get('users/:userId/summary')
+getRatingSummary(@Param('userId') userId: string) {
+  return this.reviewsService.getRatingSummary(userId);
+}
   @Get('given')
   findGiven(@Req() req: Request) {
     return this.reviewsService.findGiven(
