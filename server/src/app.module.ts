@@ -8,6 +8,8 @@ import {UsersModule} from './users/users.module'
 import { AuthModule } from './auth/auth.module';
 import { ListingsModule } from './listings/listings.module';
 import { OffersModule } from './offers/offers.module';
+import { TransactionsModule } from './transactions/transactions.module';
+import { AdminModule } from './admin/admin.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -24,6 +26,8 @@ UsersModule,
 AuthModule,
 ListingsModule,
 OffersModule,
+TransactionsModule,
+AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

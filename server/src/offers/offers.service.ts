@@ -10,6 +10,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { isValidObjectId, Model } from 'mongoose';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { Offer, OfferDocument, OfferStatus } from './schemas/offer.schema';
+import { TransactionsService } from '../transactions/transactions.service';
+
 import {
   Listing,
   ListingDocument,
@@ -24,6 +26,8 @@ export class OffersService {
 
     @InjectModel(Listing.name)
     private readonly listingModel: Model<ListingDocument>,
+  private readonly transactionsService: TransactionsService,
+
   ) {}
 
   async create(createOfferDto: CreateOfferDto, userId: string) {
@@ -173,8 +177,11 @@ async accept(offerId: string, userId: string) {
     },
     { $set: { status: OfferStatus.REJECTED } },
   ).exec();
+await this.transactionsService.createFromAcceptedOffer(
+  acceptedOffer._id.toString(),
+);
 
-  return acceptedOffer;
+return acceptedOffer;
 }
 
 async reject(offerId: string, userId: string) {
