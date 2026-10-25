@@ -11,6 +11,7 @@ import { OffersModule } from './offers/offers.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { AdminModule } from './admin/admin.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { ReviewsModule } from './reviews/reviews.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -30,6 +31,7 @@ OffersModule,
 TransactionsModule,
 AdminModule,
 NotificationsModule,
+ReviewsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
