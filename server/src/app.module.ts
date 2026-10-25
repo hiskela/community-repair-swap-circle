@@ -10,6 +10,7 @@ import { ListingsModule } from './listings/listings.module';
 import { OffersModule } from './offers/offers.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { AdminModule } from './admin/admin.module';
+import { NotificationsModule } from './notifications/notifications.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -28,6 +29,7 @@ ListingsModule,
 OffersModule,
 TransactionsModule,
 AdminModule,
+NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

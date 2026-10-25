@@ -1,17 +1,19 @@
 
 import {
   BadRequestException,
+ConflictException,
   ForbiddenException,
   Injectable,
   NotFoundException,
-ConflictException
+
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { isValidObjectId, Model } from 'mongoose';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { Offer, OfferDocument, OfferStatus } from './schemas/offer.schema';
 import { TransactionsService } from '../transactions/transactions.service';
-
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/schemas/notification.schema';
 import {
   Listing,
   ListingDocument,
@@ -27,6 +29,7 @@ export class OffersService {
     @InjectModel(Listing.name)
     private readonly listingModel: Model<ListingDocument>,
   private readonly transactionsService: TransactionsService,
+  private readonly notificationsService: NotificationsService,
 
   ) {}
 
@@ -72,11 +75,22 @@ export class OffersService {
       );
     }
 
-    return this.offerModel.create({
-      listing: listingId,
-      sender: userId,
-      message: message.trim(),
-    });
+    const offer = await this.offerModel.create({
+  listing: listingId,
+  sender: userId,
+  message: message.trim(),
+});
+
+await this.notificationsService.create(
+  listing.owner.toString(),
+  NotificationType.OFFER_RECEIVED,
+  `You received an offer for "${listing.title}".`,
+  userId,
+  offer._id.toString(),
+  'offer',
+);
+
+return offer;
   }
 
 async findSent(userId: string) {
@@ -169,16 +183,43 @@ async accept(offerId: string, userId: string) {
     );
   }
 
-  await this.offerModel.updateMany(
-    {
-      listing: listing._id,
-      _id: { $ne: offer._id },
-      status: OfferStatus.PENDING,
-    },
-    { $set: { status: OfferStatus.REJECTED } },
-  ).exec();
+  
+const rejectedOffers = await this.offerModel.find({
+  listing: listing._id,
+  _id: { $ne: offer._id },
+  status: OfferStatus.PENDING,
+}).exec();
+
+await this.offerModel.updateMany(
+  {
+    listing: listing._id,
+    _id: { $ne: offer._id },
+    status: OfferStatus.PENDING,
+  },
+  { $set: { status: OfferStatus.REJECTED } },
+).exec();
+
+for (const rejectedOffer of rejectedOffers) {
+  await this.notificationsService.create(
+    rejectedOffer.sender.toString(),
+    NotificationType.OFFER_REJECTED,
+    `Your offer for "${listing.title}" was rejected because another offer was accepted.`,
+    userId,
+    rejectedOffer._id.toString(),
+    'offer',
+  );
+}
+
 await this.transactionsService.createFromAcceptedOffer(
   acceptedOffer._id.toString(),
+);
+await this.notificationsService.create(
+  acceptedOffer.sender.toString(),
+  NotificationType.OFFER_ACCEPTED,
+  `Your offer for "${listing.title}" was accepted.`,
+  userId,
+  acceptedOffer._id.toString(),
+  'offer',
 );
 
 return acceptedOffer;
@@ -221,7 +262,16 @@ async reject(offerId: string, userId: string) {
     );
   }
 
-  return rejectedOffer;
+await this.notificationsService.create(
+  rejectedOffer.sender.toString(),
+  NotificationType.OFFER_REJECTED,
+  `Your offer for "${listing.title}" was rejected.`,
+  userId,
+  rejectedOffer._id.toString(),
+  'offer',
+);
+
+return rejectedOffer;
 }
 
 

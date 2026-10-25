@@ -5,6 +5,7 @@ import { OffersController } from './offers.controller';
 import { OffersService } from './offers.service';
 import { Offer, OfferSchema } from './schemas/offer.schema';
 import { TransactionsModule } from '../transactions/transactions.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 import {
   Listing,
   ListingSchema,
@@ -17,6 +18,7 @@ import {
       { name: Listing.name, schema: ListingSchema },
     ]),
 TransactionsModule,
+NotificationsModule,
   ],
   controllers: [OffersController],
   providers: [OffersService],
