@@ -3,6 +3,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TransactionsController } from './transactions.controller';
 import { TransactionsService } from './transactions.service';
+import { NotificationsModule } from '../notifications/notifications.module';
 import {
   Transaction,
   TransactionSchema,
@@ -20,6 +21,7 @@ import {
       { name: Offer.name, schema: OfferSchema },
 {name: Listing.name, schema:ListingSchema}
     ]),
+NotificationsModule,
   ],
   controllers: [TransactionsController],
   providers: [TransactionsService],

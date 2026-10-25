@@ -8,7 +8,6 @@ BadRequestException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { UpdateTransactionStatusDto } from './dto/update-transaction-status.dto';
-import {Body, Patch, Param, Delete,}from "@nestjs/common"
 import {
   Offer,
   OfferDocument,
@@ -16,6 +15,8 @@ import {
 } from '../offers/schemas/offer.schema';
 import { OpenDisputeDto } from './dto/open-dispute.dto';
 import { ResolveDisputeDto } from './dto/resolve-dispute.dto';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/schemas/notification.schema';
 import {
   Transaction,
   TransactionDocument,
@@ -30,6 +31,8 @@ export class TransactionsService {
 
     @InjectModel(Offer.name)
     private readonly offerModel: Model<OfferDocument>,
+  private readonly notificationsService: NotificationsService,
+
   ) {}
 
   async createFromAcceptedOffer(offerId: string) {
@@ -145,7 +148,23 @@ async updateStatus(
 
   await transaction.save();
 
-  return transaction;
+const otherParticipantId =
+  transaction.requester.toString() === userId
+    ? transaction.provider.toString()
+    : transaction.requester.toString();
+
+await this.notificationsService.create(
+  otherParticipantId,
+  NotificationType.TRANSACTION_UPDATED,
+  transaction.status === TransactionStatus.IN_PROGRESS
+    ? 'Your transaction has started.'
+    : 'Your transaction has been cancelled.',
+  userId,
+  transaction._id.toString(),
+  'transaction',
+);
+
+return transaction;
 }
 
 async confirmCompletion(transactionId: string, userId: string) {
@@ -202,9 +221,25 @@ async confirmCompletion(transactionId: string, userId: string) {
         : 'Participant confirmed completion',
   });
 
-  await transaction.save();
+ await transaction.save();
 
-  return transaction;
+const otherParticipantId =
+  transaction.requester.toString() === userId
+    ? transaction.provider.toString()
+    : transaction.requester.toString();
+
+await this.notificationsService.create(
+  otherParticipantId,
+  NotificationType.TRANSACTION_UPDATED,
+  transaction.status === TransactionStatus.COMPLETED
+    ? 'Your transaction has been completed by mutual confirmation.'
+    : 'The other participant confirmed transaction completion.',
+  userId,
+  transaction._id.toString(),
+  'transaction',
+);
+
+return transaction;
 }
 async openDispute(
   transactionId: string,
@@ -255,9 +290,23 @@ async openDispute(
     note: `Dispute opened: ${dto.reason.trim()}`,
   });
 
-  await transaction.save();
+ await transaction.save();
 
-  return transaction;
+const otherParticipantId =
+  transaction.requester.toString() === userId
+    ? transaction.provider.toString()
+    : transaction.requester.toString();
+
+await this.notificationsService.create(
+  otherParticipantId,
+  NotificationType.DISPUTE_OPENED,
+  'A dispute has been opened for your transaction.',
+  userId,
+  transaction._id.toString(),
+  'transaction',
+);
+
+return transaction;
 }
 async resolveDispute(
   transactionId: string,
@@ -307,8 +356,22 @@ async resolveDispute(
     note: `Dispute resolved: ${dto.resolutionNotes.trim()}`,
   });
 
-  await transaction.save();
+ await transaction.save();
 
-  return transaction;
+for (const participantId of [
+  transaction.requester.toString(),
+  transaction.provider.toString(),
+]) {
+  await this.notificationsService.create(
+    participantId,
+    NotificationType.DISPUTE_RESOLVED,
+    `Your transaction dispute was resolved. Status: ${transaction.status}.`,
+    adminId,
+    transaction._id.toString(),
+    'transaction',
+  );
+}
+
+return transaction;
 }
 }
