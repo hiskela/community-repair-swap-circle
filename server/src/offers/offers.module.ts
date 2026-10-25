@@ -6,6 +6,7 @@ import { OffersService } from './offers.service';
 import { Offer, OfferSchema } from './schemas/offer.schema';
 import { TransactionsModule } from '../transactions/transactions.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { SafetyModule } from '../safety/safety.module';
 import {
   Listing,
   ListingSchema,
@@ -17,8 +18,9 @@ import {
       { name: Offer.name, schema: OfferSchema },
       { name: Listing.name, schema: ListingSchema },
     ]),
-TransactionsModule,
-NotificationsModule,
+    TransactionsModule,
+    NotificationsModule,
+    SafetyModule,
   ],
   controllers: [OffersController],
   providers: [OffersService],

@@ -8,12 +8,14 @@ ConflictException,
 
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { isValidObjectId, Model } from 'mongoose';
+import { isValidObjectId, Model, Types } from 'mongoose';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { Offer, OfferDocument, OfferStatus } from './schemas/offer.schema';
 import { TransactionsService } from '../transactions/transactions.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/schemas/notification.schema';
+import { Block } from '../safety/schemas/block.schema';
+
 import {
   Listing,
   ListingDocument,
@@ -22,16 +24,19 @@ import {
 
 @Injectable()
 export class OffersService {
-  constructor(
-    @InjectModel(Offer.name)
-    private readonly offerModel: Model<OfferDocument>,
+ constructor(
+  @InjectModel(Offer.name)
+  private readonly offerModel: Model<OfferDocument>,
 
-    @InjectModel(Listing.name)
-    private readonly listingModel: Model<ListingDocument>,
+  @InjectModel(Block.name)
+  private readonly blockModel: Model<Block>,
+
+  @InjectModel(Listing.name)
+  private readonly listingModel: Model<ListingDocument>,
+
   private readonly transactionsService: TransactionsService,
   private readonly notificationsService: NotificationsService,
-
-  ) {}
+) {}
 
   async create(createOfferDto: CreateOfferDto, userId: string) {
     const { listingId, message } = createOfferDto;
@@ -59,7 +64,24 @@ export class OffersService {
         'You cannot make an offer on your own listing',
       );
     }
+const blockExists = await this.blockModel.exists({
+  $or: [
+    {
+      blocker: new Types.ObjectId(userId),
+      blockedUser: listing.owner,
+    },
+    {
+      blocker: listing.owner,
+      blockedUser: new Types.ObjectId(userId),
+    },
+  ],
+});
 
+if (blockExists) {
+  throw new ForbiddenException(
+    'You cannot send an offer because a block exists between you and the listing owner',
+  );
+}
 
     const existingOffer = await this.offerModel
       .findOne({
