@@ -1,0 +1,276 @@
+
+import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import {
+  acceptOffer,
+  getReceivedOffers,
+  rejectOffer,
+  type Offer,
+} from '../services/api';
+import { useAuth } from '../auth/AuthContext';
+
+export default function ReceivedOffersPage() {
+  const { token } = useAuth();
+
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [actionError, setActionError] = useState('');
+  const [processingId, setProcessingId] = useState<string | null>(null);
+
+  const loadOffers = useCallback(async () => {
+    if (!token) {
+      setError('Please sign in to view received offers.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setError('');
+      const result = await getReceivedOffers(token);
+      setOffers(result);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Failed to load received offers.',
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, [token]);
+
+  useEffect(() => {
+    void loadOffers();
+  }, [loadOffers]);
+
+  async function handleAction(
+    offer: Offer,
+    action: 'accept' | 'reject',
+  ) {
+    if (!token) {
+      setActionError('Please sign in again.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      action === 'accept'
+        ? 'Accept this offer? This may reserve the listing and affect other pending offers.'
+        : 'Are you sure you want to reject this offer?',
+    );
+
+    if (!confirmed) return;
+
+    setProcessingId(offer._id);
+    setActionError('');
+
+    try {
+      if (action === 'accept') {
+        await acceptOffer(offer._id, token);
+      } else {
+        await rejectOffer(offer._id, token);
+      }
+
+      await loadOffers();
+    } catch (err) {
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : `Failed to ${action} this offer.`,
+      );
+    } finally {
+      setProcessingId(null);
+    }
+  }
+
+  function statusStyle(status: Offer['status']) {
+    switch (status) {
+      case 'accepted':
+        return 'bg-emerald-50 text-emerald-700';
+      case 'rejected':
+        return 'bg-red-50 text-red-700';
+      case 'withdrawn':
+        return 'bg-slate-100 text-slate-600';
+      default:
+        return 'bg-amber-50 text-amber-700';
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-800">
+      <header className="border-b border-slate-200 bg-white">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+          <Link
+            to="/dashboard"
+            className="text-xl font-bold tracking-tight text-emerald-950"
+          >
+            Repair<span className="text-emerald-600">Circle</span>
+          </Link>
+
+          <nav className="flex items-center gap-4 text-sm">
+            <Link
+              to="/dashboard"
+              className="font-medium text-slate-600 hover:text-emerald-700"
+            >
+              Dashboard
+            </Link>
+            <Link
+              to="/listings"
+              className="font-medium text-slate-600 hover:text-emerald-700"
+            >
+              Listings
+            </Link>
+            <Link
+              to="/offers/sent"
+              className="font-medium text-slate-600 hover:text-emerald-700"
+            >
+              Sent Offers
+            </Link>
+          </nav>
+        </div>
+      </header>
+
+      <main className="mx-auto mt-8 max-w-5xl space-y-6 px-4 pb-12 sm:px-6">
+        <div>
+          <p className="text-sm font-semibold text-emerald-700">
+            YOUR LISTINGS
+          </p>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+            Received Offers
+          </h1>
+          <p className="mt-2 text-slate-600">
+            Review offers from community members interested in your listings.
+          </p>
+        </div>
+
+        {actionError && (
+          <div
+            role="alert"
+            className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+          >
+            {actionError}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
+            <p className="text-sm text-slate-500">Loading received offers...</p>
+          </div>
+        ) : error ? (
+          <div className="rounded-2xl border border-red-200 bg-white p-6">
+            <h2 className="font-semibold text-red-700">
+              Could not load offers
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">{error}</p>
+            <button
+              type="button"
+              onClick={() => {
+                setLoading(true);
+                void loadOffers();
+              }}
+              className="mt-4 rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
+            >
+              Try again
+            </button>
+          </div>
+        ) : offers.length === 0 ? (
+          <div className="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center">
+            <h2 className="text-lg font-semibold text-slate-900">
+              No received offers yet
+            </h2>
+            <p className="mt-2 text-sm text-slate-600">
+              Offers from other members will appear here.
+            </p>
+            <Link
+              to="/listings"
+              className="mt-5 inline-flex rounded-xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white hover:bg-emerald-800"
+            >
+              Browse listings
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {offers.map((offer) => {
+              const listing =
+                typeof offer.listingId === 'object'
+                  ? offer.listingId
+                  : null;
+
+              return (
+                <article
+                  key={offer._id}
+                  className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h2 className="text-lg font-semibold text-slate-900">
+                        {listing?.title || 'Offer on your listing'}
+                      </h2>
+                      {listing?.category && (
+                        <p className="mt-1 text-sm text-slate-500">
+                          Category: {listing.category}
+                        </p>
+                      )}
+                      {listing?._id && (
+                        <Link
+                          to={`/listings/${listing._id}`}
+                          className="mt-2 inline-block text-sm font-medium text-emerald-700 hover:text-emerald-800"
+                        >
+                          View listing →
+                        </Link>
+                      )}
+                    </div>
+
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusStyle(offer.status)}`}
+                    >
+                      {offer.status}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 rounded-xl bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                      Offer message
+                    </p>
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
+                      {offer.message}
+                    </p>
+                  </div>
+
+                  {offer.createdAt && (
+                    <p className="mt-4 text-xs text-slate-500">
+                      Received on{' '}
+                      {new Date(offer.createdAt).toLocaleDateString()}
+                    </p>
+                  )}
+
+                  {offer.status === 'pending' && (
+                    <div className="mt-5 flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        disabled={processingId !== null}
+                        onClick={() => void handleAction(offer, 'accept')}
+                        className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        {processingId === offer._id
+                          ? 'Processing...'
+                          : 'Accept Offer'}
+                      </button>
+
+                      <button
+                        type="button"
+                        disabled={processingId !== null}
+                        onClick={() => void handleAction(offer, 'reject')}
+                        className="rounded-xl border border-red-200 px-4 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        Reject Offer
+                      </button>
+                    </div>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}

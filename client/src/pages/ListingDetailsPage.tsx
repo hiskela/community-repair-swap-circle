@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import { getListingById } from '../services/api';
 import { useAuth } from '../auth/AuthContext';
 
@@ -26,7 +26,7 @@ const typeLabels: Record<Listing['type'], string> = {
 export default function ListingDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const { token } = useAuth();
-
+const navigate=useNavigate();
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -200,14 +200,22 @@ export default function ListingDetailsPage() {
                 )}
               </section>
 
-              {listing.status === 'open' && (
-                <div className="border-t border-slate-100 pt-5">
-                  <p className="text-sm leading-6 text-slate-600">
-                    Interested? The next step will let you make an offer and
-                    discuss the exchange with the listing owner.
-                  </p>
-                </div>
-              )}
+            {listing.status === 'open' && (
+  <div className="border-t border-slate-100 pt-5">
+    <p className="text-sm leading-6 text-slate-600">
+      Interested in this listing? Send an offer to the owner and
+      discuss repair, swapping, or any additional payment.
+    </p>
+
+    <button
+      type="button"
+      onClick={() => navigate(`/listings/${listing._id}/offer`)}
+      className="mt-4 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
+    >
+      Make an Offer
+    </button>
+  </div>
+)}
             </div>
           </article>
         ) : null}

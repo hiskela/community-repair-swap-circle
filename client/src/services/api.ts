@@ -106,3 +106,77 @@ export function getListingById(id: string, token: string) {
   });
 }
 
+
+export function createOffer(
+  input: {
+    listingId: string;
+    message: string;
+  },
+  token: string,
+) {
+  return request('/offers', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(input),
+  });
+}
+
+
+export type Offer = {
+  _id: string;
+  listingId: string | {
+    _id: string;
+    title: string;
+    type?: string;
+    category?: string;
+  };
+  message: string;
+  status: 'pending' | 'accepted' | 'rejected' | 'withdrawn';
+  createdAt?: string;
+  sender?: {
+    _id?: string;
+    name?: string;
+    email?: string;
+  };
+  receiver?: {
+    _id?: string;
+    name?: string;
+    email?: string;
+  };
+};
+
+export function getSentOffers(token: string) {
+  return request<Offer[]>('/offers/sent', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function getReceivedOffers(token: string) {
+  return request<Offer[]>('/offers/received', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function acceptOffer(offerId: string, token: string) {
+  return request<Offer>(`/offers/${offerId}/accept`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function rejectOffer(offerId: string, token: string) {
+  return request<Offer>(`/offers/${offerId}/reject`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}

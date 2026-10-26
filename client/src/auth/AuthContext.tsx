@@ -16,7 +16,9 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(() => {
+    return sessionStorage.getItem('accessToken');
+  });
 
   function signIn(result: AuthResponse) {
     setToken(result.accessToken);

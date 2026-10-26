@@ -9,6 +9,10 @@ import ListingsPage from './pages/ListingsPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import CreateListingPage from './pages/CreateListingPage';
 import ListingDetailsPage from './pages/ListingDetailsPage';
+import CreateOfferPage from './pages/CreateOfferPage';
+import SentOffersPage from './pages/SentOffersPage';
+import ReceivedOffersPage from './pages/ReceivedOffersPage';
+
 function AppRoutes() {
   const { token } = useAuth();
 
@@ -27,6 +31,9 @@ function AppRoutes() {
       </Route>
 <Route path="/listings/:id" element={<ListingDetailsPage />} />
 <Route path="/listings/new" element={<CreateListingPage />} />
+<Route path="/listings/:id/offer" element={<CreateOfferPage />} />
+<Route path="/offers/sent" element={<SentOffersPage />} />
+<Route path="/offers/received" element={<ReceivedOffersPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
