@@ -180,3 +180,119 @@ export function rejectOffer(offerId: string, token: string) {
     },
   });
 }
+
+export type TransactionStatus =
+  | 'agreed'
+  | 'in_progress'
+  | 'completed'
+  | 'cancelled'
+  | 'disputed';
+export type CancellationRequest = {
+  reason: string;
+  requestedBy: string | { _id: string };
+  status: 'pending' | 'accepted' | 'rejected';
+  respondedBy?: string | { _id: string };
+  respondedAt?: string;
+};
+export type Transaction = {
+  _id: string;
+  status: TransactionStatus;
+  listing: {
+    _id: string;
+    title: string;
+    type?: string;
+    category?: string;
+    location?: string;
+    status?: string;
+  };
+  requester: {
+    _id: string;
+    name?: string;
+    email?: string;
+  };
+  provider: {
+    _id: string;
+    name?: string;
+    email?: string;
+  };
+  requesterConfirmedCompletion?: boolean;
+  providerConfirmedCompletion?: boolean;
+  disputeReason?: string;
+  resolutionNotes?: string;
+cancellationRequest?: CancellationRequest | null;
+  createdAt?: string;
+};
+
+export function getMyTransactions(token: string) {
+  return request<Transaction[]>('/transactions/my', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function updateTransactionStatus(
+  transactionId: string,
+  status: 'in_progress' | 'cancelled',
+  token: string,
+) {
+  return request<Transaction>(
+    `/transactions/${transactionId}/status`,
+    {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status }),
+    },
+  );
+}
+
+export function confirmTransactionCompletion(
+  transactionId: string,
+  token: string,
+) {
+  return request<Transaction>(
+    `/transactions/${transactionId}/confirm-completion`,
+    {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}
+
+export function requestTransactionCancellation(
+  transactionId: string,
+  reason: string,
+  token: string,
+) {
+  return request<Transaction>(
+    `/transactions/${transactionId}/cancellation-request`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ reason }),
+    },
+  );
+}
+
+export function respondToCancellationRequest(
+  transactionId: string,
+  status: 'accepted' | 'rejected',
+  token: string,
+) {
+  return request<Transaction>(
+    `/transactions/${transactionId}/cancellation-request/respond`,
+    {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status }),
+    },
+  );
+}

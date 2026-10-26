@@ -19,6 +19,10 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { TransactionsService } from './transactions.service';
 import { UpdateTransactionStatusDto } from './dto/update-transaction-status.dto';
 import { OpenDisputeDto } from './dto/open-dispute.dto';
+import { RequestCancellationDto } from './dto/request-cancellation.dto';
+import { RespondCancellationDto } from './dto/respond-cancellation.dto';
+
+
 @ApiTags('Transactions')
 @ApiBearerAuth()
 @Controller('transactions')
@@ -38,6 +42,32 @@ export class TransactionsController {
   ) {
     return this.transactionsService.updateStatus(id, req.user.userId, dto);
   }
+  @Post(':id/cancellation-request')
+  requestCancellation(
+    @Param('id') id: string,
+    @Body() dto: RequestCancellationDto,
+    @Request() req: { user: { userId: string } },
+  ) {
+    return this.transactionsService.requestCancellation(
+      id,
+      req.user.userId,
+      dto,
+    );
+  }
+
+  @Patch(':id/cancellation-request/respond')
+  respondToCancellation(
+    @Param('id') id: string,
+    @Body() dto: RespondCancellationDto,
+    @Request() req: { user: { userId: string } },
+  ) {
+    return this.transactionsService.respondToCancellation(
+      id,
+      req.user.userId,
+      dto,
+    );
+  }
+
   @Patch(':id/confirm-completion')
   confirmCompletion(
     @Param('id') id: string,

@@ -13,6 +13,31 @@ export enum TransactionStatus {
 }
 
 @Schema({ _id: false })
+export class CancellationRequest {
+  @Prop({ required: true })
+  reason: string;
+
+  @Prop({ type: Types.ObjectId, required: true, ref: 'User' })
+  requestedBy: Types.ObjectId;
+
+  @Prop({
+    required: true,
+    enum: ['pending', 'accepted', 'rejected'],
+    default: 'pending',
+  })
+  status: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'User', default: null })
+  respondedBy?: Types.ObjectId;
+
+  @Prop({ default: null })
+  respondedAt?: Date;
+}
+
+export const CancellationRequestSchema =
+  SchemaFactory.createForClass(CancellationRequest);
+
+@Schema({ _id: false })
 export class TransactionHistoryEntry {
   @Prop({
     type: String,
@@ -69,7 +94,8 @@ export class Transaction {
 
   @Prop({ type: String, maxlength: 1000 })
   resolutionNotes?: string;
-
+  @Prop({ type: CancellationRequestSchema, default: null })
+  cancellationRequest?: CancellationRequest | null;
   @Prop({
     type: [TransactionHistoryEntrySchema],
     default: [],

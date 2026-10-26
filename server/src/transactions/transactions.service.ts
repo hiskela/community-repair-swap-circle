@@ -15,6 +15,8 @@ import {
 } from '../offers/schemas/offer.schema';
 import { OpenDisputeDto } from './dto/open-dispute.dto';
 import { ResolveDisputeDto } from './dto/resolve-dispute.dto';
+import { RequestCancellationDto } from './dto/request-cancellation.dto';
+import { RespondCancellationDto } from './dto/respond-cancellation.dto';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/schemas/notification.schema';
 import {
@@ -166,7 +168,162 @@ await this.notificationsService.create(
 
 return transaction;
 }
+async requestCancellation(
+  transactionId: string,
+  userId: string,
+  dto: RequestCancellationDto,
+) {
+  if (!isValidObjectId(transactionId)) {
+    throw new BadRequestException('Invalid transaction ID');
+  }
 
+  const transaction = await this.transactionModel
+    .findById(transactionId)
+    .exec();
+
+  if (!transaction) {
+    throw new NotFoundException('Transaction not found');
+  }
+
+  const isRequester = transaction.requester.toString() === userId;
+  const isProvider = transaction.provider.toString() === userId;
+
+  if (!isRequester && !isProvider) {
+    throw new ForbiddenException(
+      'Only transaction participants can request cancellation',
+    );
+  }
+
+  if (transaction.status !== TransactionStatus.IN_PROGRESS) {
+    throw new ConflictException(
+      'Only in-progress transactions can request cancellation',
+    );
+  }
+
+  if (transaction.cancellationRequest?.status === 'pending') {
+    throw new ConflictException(
+      'A cancellation request is already pending',
+    );
+  }
+
+  const otherParticipantId = isRequester
+    ? transaction.provider.toString()
+    : transaction.requester.toString();
+
+  const reason = dto.reason.trim();
+
+  transaction.cancellationRequest = {
+    reason,
+    requestedBy: new Types.ObjectId(userId),
+    status: 'pending',
+  };
+
+  transaction.history ??= [];
+
+  transaction.history.push({
+    status: transaction.status,
+    changedBy: new Types.ObjectId(userId),
+    note: `Cancellation requested: ${reason}`,
+  });
+
+  await transaction.save();
+
+  await this.notificationsService.create(
+    otherParticipantId,
+    NotificationType.TRANSACTION_UPDATED,
+    'The other participant requested cancellation of your transaction.',
+    userId,
+    transaction._id.toString(),
+    'transaction',
+  );
+
+  return transaction;
+}
+
+async respondToCancellation(
+  transactionId: string,
+  userId: string,
+  dto: RespondCancellationDto,
+) {
+  if (!isValidObjectId(transactionId)) {
+    throw new BadRequestException('Invalid transaction ID');
+  }
+
+  const transaction = await this.transactionModel
+    .findById(transactionId)
+    .exec();
+
+  if (!transaction) {
+    throw new NotFoundException('Transaction not found');
+  }
+
+  const isRequester = transaction.requester.toString() === userId;
+  const isProvider = transaction.provider.toString() === userId;
+
+  if (!isRequester && !isProvider) {
+    throw new ForbiddenException(
+      'Only transaction participants can respond to cancellation',
+    );
+  }
+
+  const cancellation = transaction.cancellationRequest;
+
+  if (!cancellation || cancellation.status !== 'pending') {
+    throw new ConflictException(
+      'There is no pending cancellation request',
+    );
+  }
+
+  if (cancellation.requestedBy.toString() === userId) {
+    throw new ForbiddenException(
+      'You cannot respond to your own cancellation request',
+    );
+  }
+
+  if (transaction.status !== TransactionStatus.IN_PROGRESS) {
+    throw new ConflictException(
+      'Only in-progress transactions can respond to cancellation',
+    );
+  }
+
+  cancellation.status = dto.status;
+  cancellation.respondedBy = new Types.ObjectId(userId);
+  cancellation.respondedAt = new Date();
+
+  if (dto.status === 'accepted') {
+    transaction.status = TransactionStatus.CANCELLED;
+    transaction.requesterConfirmedCompletion = false;
+    transaction.providerConfirmedCompletion = false;
+  }
+
+  transaction.history ??= [];
+
+  transaction.history.push({
+    status: transaction.status,
+    changedBy: new Types.ObjectId(userId),
+    note:
+      dto.status === 'accepted'
+        ? 'Cancellation request accepted'
+        : 'Cancellation request rejected',
+  });
+
+  await transaction.save();
+
+  const requesterId = cancellation.requestedBy.toString();
+
+  await this.notificationsService.create(
+    requesterId,
+    NotificationType.TRANSACTION_UPDATED,
+    dto.status === 'accepted'
+      ? 'Your cancellation request was accepted. The transaction is cancelled.'
+      : 'Your cancellation request was rejected. The transaction remains active.',
+    userId,
+    transaction._id.toString(),
+    'transaction',
+  );
+
+  return transaction;
+}
 async confirmCompletion(transactionId: string, userId: string) {
   if (!isValidObjectId(transactionId)) {
     throw new BadRequestException('Invalid transaction ID');

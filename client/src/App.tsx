@@ -12,6 +12,7 @@ import ListingDetailsPage from './pages/ListingDetailsPage';
 import CreateOfferPage from './pages/CreateOfferPage';
 import SentOffersPage from './pages/SentOffersPage';
 import ReceivedOffersPage from './pages/ReceivedOffersPage';
+import MyTransactionsPage from './pages/MyTransactionsPage';
 
 function AppRoutes() {
   const { token } = useAuth();
@@ -34,6 +35,7 @@ function AppRoutes() {
 <Route path="/listings/:id/offer" element={<CreateOfferPage />} />
 <Route path="/offers/sent" element={<SentOffersPage />} />
 <Route path="/offers/received" element={<ReceivedOffersPage />} />
+<Route path="/transactions" element={<MyTransactionsPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
