@@ -31,7 +31,7 @@ export default function LoginPage() {
         throw new Error('The server did not return an access token.');
       }
 
-      signIn(result.accessToken);
+      signIn(result);
       navigate('/dashboard', { replace: true });
     } catch (err) {
       setError(
