@@ -7,7 +7,8 @@ import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import ListingsPage from './pages/ListingsPage';
 import ProtectedRoute from './components/ProtectedRoute';
-
+import CreateListingPage from './pages/CreateListingPage';
+import ListingDetailsPage from './pages/ListingDetailsPage';
 function AppRoutes() {
   const { token } = useAuth();
 
@@ -24,7 +25,8 @@ function AppRoutes() {
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/listings" element={<ListingsPage />} />
       </Route>
-
+<Route path="/listings/:id" element={<ListingDetailsPage />} />
+<Route path="/listings/new" element={<CreateListingPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

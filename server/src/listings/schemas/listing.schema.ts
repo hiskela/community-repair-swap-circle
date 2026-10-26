@@ -29,7 +29,8 @@ export class Listing {
 
   @Prop({ required: true, trim: true, maxlength: 100 })
   category: string;
-
+@Prop({ trim: true, maxlength: 200 })
+wantedItem?: string;
   @Prop({ trim: true, maxlength: 200 })
   location?: string;
 

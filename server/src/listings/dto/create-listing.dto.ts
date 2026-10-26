@@ -27,6 +27,11 @@ export class CreateListingDto {
   @MaxLength(100)
   category: string;
 
+@IsOptional()
+@IsString()
+@MaxLength(200)
+wantedItem?: string;
+
   @IsOptional()
   @IsString()
   @MaxLength(200)

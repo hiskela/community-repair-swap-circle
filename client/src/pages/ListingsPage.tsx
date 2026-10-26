@@ -11,6 +11,7 @@ type Listing = {
   type: 'need_repair' | 'available' | 'looking_for_parts';
   category: string;
   location?: string;
+wantedItem?:string;
   status: 'open' | 'reserved' | 'closed';
   createdAt?: string;
   owner?: { name?: string } | string;
@@ -288,6 +289,7 @@ onChange={(event) => {
 }}                  placeholder="e.g. Electronics"
                   className="w-full rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/10"
                 />
+
               </div>
 
               <div>
@@ -401,7 +403,16 @@ onChange={(event) => {
                       <p>Posted {new Date(listing.createdAt).toLocaleDateString()}</p>
                     )}
                   </div>
-
+{listing.wantedItem && (
+  <div className="mt-3 rounded-lg bg-emerald-50 px-3 py-2">
+    <p className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+      Wanted in return
+    </p>
+    <p className="mt-1 text-sm text-emerald-950">
+      {listing.wantedItem}
+    </p>
+  </div>
+)}
                   <Link
                     to={`/listings/${listing._id}`}
                     className="mt-4 inline-flex items-center justify-center rounded-xl border border-emerald-200 px-4 py-2.5 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-50"

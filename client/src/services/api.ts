@@ -62,3 +62,47 @@ export function loginUser(input: {
     body: JSON.stringify(input),
   });
 }
+
+export type CreateListingInput = {
+  title: string;
+  description: string;
+  type: 'need_repair' | 'available' | 'looking_for_parts';
+  category: string;
+  location?: string;
+  wantedItem?: string;
+};
+
+export type Listing = {
+  _id: string;
+  title: string;
+  description: string;
+  type: 'need_repair' | 'available' | 'looking_for_parts';
+  category: string;
+  location?: string;
+  wantedItem?: string;
+  status: 'open' | 'reserved' | 'closed';
+  createdAt?: string;
+  owner?: { name?: string } | string;
+};
+
+export function createListing(
+  input: CreateListingInput,
+  token: string,
+) {
+  return request<Listing>('/listings', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(input),
+  });
+}
+
+export function getListingById(id: string, token: string) {
+  return request<Listing>(`/listings/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
