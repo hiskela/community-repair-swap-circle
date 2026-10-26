@@ -5,6 +5,7 @@ import {
   Patch,
   Param,
   Req,
+Delete,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -40,4 +41,12 @@ export class NotificationsController {
   ) {
     return this.notificationsService.markAllAsRead(req.user.userId);
   }
+
+@Delete(':id')
+deleteMine(
+  @Param('id') id: string,
+  @Req() req: Request & { user: { userId: string } },
+) {
+  return this.notificationsService.deleteMine(id, req.user.userId);
+}
 }

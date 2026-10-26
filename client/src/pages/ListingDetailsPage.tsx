@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from 'react';
-import { Link, useParams, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getListingById } from '../services/api';
 import { useAuth } from '../auth/AuthContext';
 
@@ -26,7 +26,8 @@ const typeLabels: Record<Listing['type'], string> = {
 export default function ListingDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const { token } = useAuth();
-const navigate=useNavigate();
+  const navigate = useNavigate();
+
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -78,34 +79,8 @@ const navigate=useNavigate();
       : listing?.owner?.name;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <Link
-            to="/dashboard"
-            className="text-xl font-bold tracking-tight text-emerald-950"
-          >
-            Repair<span className="text-emerald-600">Circle</span>
-          </Link>
-
-          <nav className="flex items-center gap-4 text-sm">
-            <Link
-              to="/dashboard"
-              className="font-medium text-slate-600 hover:text-emerald-700"
-            >
-              Dashboard
-            </Link>
-            <Link
-              to="/listings"
-              className="font-medium text-slate-600 hover:text-emerald-700"
-            >
-              Listings
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6 sm:py-10">
+    <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-800 sm:px-6 sm:py-10">
+      <div className="mx-auto max-w-4xl space-y-6">
         <Link
           to="/listings"
           className="inline-flex text-sm font-medium text-emerald-700 hover:text-emerald-800"
@@ -135,7 +110,7 @@ const navigate=useNavigate();
             <div className="border-b border-slate-100 p-6 sm:p-8">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                  {typeLabels[listing.type]}
+                  {typeLabels[listing.type] ?? listing.type}
                 </span>
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold capitalize text-slate-600">
                   {listing.status}
@@ -169,10 +144,6 @@ const navigate=useNavigate();
                   <p className="mt-2 text-slate-800">
                     {listing.wantedItem}
                   </p>
-                  <p className="mt-2 text-xs leading-5 text-emerald-800">
-                    You can discuss exchange details and any extra payment
-                    through chat.
-                  </p>
                 </section>
               )}
 
@@ -192,6 +163,7 @@ const navigate=useNavigate();
                 <p className="mt-2 font-medium text-slate-800">
                   {ownerName || 'Community member'}
                 </p>
+
                 {listing.createdAt && (
                   <p className="mt-1 text-xs text-slate-500">
                     Posted on{' '}
@@ -200,26 +172,45 @@ const navigate=useNavigate();
                 )}
               </section>
 
-            {listing.status === 'open' && (
-  <div className="border-t border-slate-100 pt-5">
-    <p className="text-sm leading-6 text-slate-600">
-      Interested in this listing? Send an offer to the owner and
-      discuss repair, swapping, or any additional payment.
-    </p>
+              {listing.status === 'open' && (
+                <section className="border-t border-slate-100 pt-5">
+                  <p className="text-sm leading-6 text-slate-600">
+                    Interested in this listing? Send an offer to the owner
+                    to discuss the repair, swap, or exchange.
+                  </p>
 
-    <button
-      type="button"
-      onClick={() => navigate(`/listings/${listing._id}/offer`)}
-      className="mt-4 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
-    >
-      Make an Offer
-    </button>
-  </div>
-)}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate(`/listings/${listing._id}/offer`)
+                    }
+                    className="mt-4 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
+                  >
+                    Make an Offer
+                  </button>
+                </section>
+              )}
+
+              {listing.status !== 'open' && (
+                <p className="border-t border-slate-100 pt-5 text-sm text-slate-500">
+                  This listing is {listing.status} and is not currently
+                  accepting new offers.
+                </p>
+              )}
             </div>
           </article>
-        ) : null}
-      </main>
-    </div>
+        ) : (
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
+            <p className="text-slate-600">Listing not found.</p>
+            <Link
+              to="/listings"
+              className="mt-4 inline-block font-medium text-emerald-700 hover:text-emerald-800"
+            >
+              Browse listings
+            </Link>
+          </div>
+        )}
+      </div>
+    </main>
   );
 }

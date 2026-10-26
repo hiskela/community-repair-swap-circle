@@ -33,7 +33,9 @@ export default function SentOffersPage() {
       } catch (err) {
         if (!cancelled) {
           setError(
-            err instanceof Error ? err.message : 'Failed to load your offers.',
+            err instanceof Error
+              ? err.message
+              : 'Failed to load your offers.',
           );
         }
       } finally {
@@ -64,38 +66,14 @@ export default function SentOffersPage() {
   }
 
   function listingDetails(offer: Offer) {
-    return typeof offer.listingId === 'object' ? offer.listingId : null;
+    return typeof offer.listingId === 'object' && offer.listingId !== null
+      ? offer.listingId
+      : null;
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <Link
-            to="/dashboard"
-            className="text-xl font-bold tracking-tight text-emerald-950"
-          >
-            Repair<span className="text-emerald-600">Circle</span>
-          </Link>
-
-          <nav className="flex items-center gap-4 text-sm">
-            <Link
-              to="/dashboard"
-              className="font-medium text-slate-600 hover:text-emerald-700"
-            >
-              Dashboard
-            </Link>
-            <Link
-              to="/listings"
-              className="font-medium text-slate-600 hover:text-emerald-700"
-            >
-              Listings
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      <main className="mx-auto mt-8 max-w-5xl space-y-6 px-4 pb-12 sm:px-6">
+    <main className="min-h-screen bg-slate-50 px-4 py-8 text-slate-800 sm:px-6 sm:py-10">
+      <div className="mx-auto max-w-5xl space-y-6">
         <div>
           <p className="text-sm font-semibold text-emerald-700">
             YOUR ACTIVITY
@@ -110,7 +88,9 @@ export default function SentOffersPage() {
 
         {loading ? (
           <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
-            <p className="text-sm text-slate-500">Loading your offers...</p>
+            <p className="text-sm text-slate-500">
+              Loading your offers...
+            </p>
           </div>
         ) : error ? (
           <div className="rounded-2xl border border-red-200 bg-white p-6">
@@ -118,6 +98,13 @@ export default function SentOffersPage() {
               Could not load offers
             </h2>
             <p className="mt-2 text-sm text-slate-600">{error}</p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="mt-4 rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800"
+            >
+              Try again
+            </button>
           </div>
         ) : offers.length === 0 ? (
           <div className="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center">
@@ -159,7 +146,7 @@ export default function SentOffersPage() {
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusStyle(offer.status)}`}
                     >
-                      {offer.status}
+                      {offer.status.replace('_', ' ')}
                     </span>
                   </div>
 
@@ -174,13 +161,14 @@ export default function SentOffersPage() {
 
                   {offer.createdAt && (
                     <p className="mt-4 text-xs text-slate-500">
-                      Sent on {new Date(offer.createdAt).toLocaleDateString()}
+                      Sent on{' '}
+                      {new Date(offer.createdAt).toLocaleDateString()}
                     </p>
                   )}
 
-                  {typeof offer.listingId === 'object' && (
+                  {listing && (
                     <Link
-                      to={`/listings/${offer.listingId._id}`}
+                      to={`/listings/${listing._id}`}
                       className="mt-4 inline-flex text-sm font-semibold text-emerald-700 hover:text-emerald-800"
                     >
                       View listing →
@@ -191,7 +179,7 @@ export default function SentOffersPage() {
             })}
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }

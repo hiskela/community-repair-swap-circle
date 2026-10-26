@@ -79,4 +79,23 @@ export class NotificationsService {
       relatedType,
     });
   }
+async deleteMine(notificationId: string, userId: string) {
+  if (!isValidObjectId(notificationId)) {
+    throw new NotFoundException('Notification not found');
+  }
+
+  const notification = await this.notificationModel.findOneAndDelete({
+    _id: new Types.ObjectId(notificationId),
+    recipient: new Types.ObjectId(userId),
+  });
+
+  if (!notification) {
+    throw new NotFoundException('Notification not found');
+  }
+
+  return {
+    message: 'Notification deleted successfully',
+    id: notificationId,
+  };
+}
 }

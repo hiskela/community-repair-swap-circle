@@ -296,3 +296,72 @@ export function respondToCancellationRequest(
     },
   );
 }
+
+export type NotificationType =
+  | 'offer_received'
+  | 'offer_accepted'
+  | 'offer_rejected'
+  | 'transaction_updated'
+  | 'dispute_opened'
+  | 'dispute_resolved';
+
+export type AppNotification = {
+  _id: string;
+  type: NotificationType;
+  message: string;
+  isRead: boolean;
+  actor?: string | { _id: string; name?: string };
+  relatedId?: string;
+  relatedType?: string;
+  createdAt?: string;
+};
+
+export function getNotifications(token: string) {
+  return request<AppNotification[]>('/notifications', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function markNotificationAsRead(
+  notificationId: string,
+  token: string,
+) {
+  return request<AppNotification>(
+    `/notifications/${notificationId}/read`,
+    {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}
+
+export function markAllNotificationsAsRead(token: string) {
+  return request<{ message: string; modifiedCount: number }>(
+    '/notifications/read-all',
+    {
+      method: 'PATCH',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+
+}
+export function deleteNotification(
+  notificationId: string,
+  token: string,
+) {
+  return request<{ message: string; id: string }>(
+    `/notifications/${notificationId}`,
+    {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}
