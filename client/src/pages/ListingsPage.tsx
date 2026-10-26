@@ -84,6 +84,18 @@ useEffect(() => {
 
   return () => clearTimeout(timer);
 }, [filters.keyword]);
+useEffect(() => {
+  const timer = setTimeout(() => {
+    setAppliedFilters((current) => ({
+      ...current,
+      category: filters.category.trim(),
+      location: filters.location.trim(),
+      type: filters.type,
+    }));
+  }, 300);
+
+  return () => clearTimeout(timer);
+}, [filters.category, filters.location, filters.type]);
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -249,8 +261,11 @@ useEffect(() => {
                 <select
                   id="type"
                   value={filters.type}
-                  onChange={(event) => setFilters({ ...filters, type: event.target.value })}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/10"
+onChange={(event) => {
+  setFilters((current) => ({ ...current, type: event.target.value }));
+  setPage(1);
+  setListings([]);
+}}                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/10"
                 >
                   <option value="">All types</option>
                   <option value="need_repair">Repair needed</option>
@@ -266,8 +281,11 @@ useEffect(() => {
                 <input
                   id="category"
                   value={filters.category}
-                  onChange={(event) => setFilters({ ...filters, category: event.target.value })}
-                  placeholder="e.g. Electronics"
+onChange={(event) => {
+  setFilters((current) => ({ ...current, category: event.target.value }));
+  setPage(1);
+  setListings([]);
+}}                  placeholder="e.g. Electronics"
                   className="w-full rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/10"
                 />
               </div>
@@ -279,8 +297,11 @@ useEffect(() => {
                 <input
                   id="location"
                   value={filters.location}
-                  onChange={(event) => setFilters({ ...filters, location: event.target.value })}
-                  placeholder="e.g. Jimma"
+onChange={(event) => {
+  setFilters((current) => ({ ...current, location: event.target.value }));
+  setPage(1);
+  setListings([]);
+}}                  placeholder="e.g. Jimma"
                   className="w-full rounded-xl border border-slate-200 px-3 py-3 text-sm outline-none focus:border-emerald-600 focus:ring-4 focus:ring-emerald-600/10"
                 />
               </div>
