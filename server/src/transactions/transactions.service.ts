@@ -83,9 +83,16 @@ history: [
     });
   }
 async findMyTransactions(userId: string) {
+  const userObjectId = new Types.ObjectId(userId);
+
   return this.transactionModel
     .find({
-      $or: [{ requester: userId }, { provider: userId }],
+      $or: [
+        { requester: userObjectId },
+        { provider: userObjectId },
+        { requester: userId },
+        { provider: userId },
+      ],
     })
     .populate('listing', 'title type category location status')
     .populate('requester', 'name email')
@@ -93,7 +100,6 @@ async findMyTransactions(userId: string) {
     .sort({ createdAt: -1 })
     .exec();
 }
-
 
 async updateStatus(
   transactionId: string,
