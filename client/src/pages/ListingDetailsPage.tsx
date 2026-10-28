@@ -36,8 +36,8 @@ export default function ListingDetailsPage() {
     let cancelled = false;
 
     async function loadListing() {
-      if (!id || !token) {
-        setError('Unable to load this listing. Please sign in again.');
+      if (!id) {
+        setError('Invalid listing.');
         setLoading(false);
         return;
       }
@@ -45,33 +45,33 @@ export default function ListingDetailsPage() {
       try {
         setLoading(true);
         setError('');
-
-        const result = await getListingById(id, token);
-
-        if (!cancelled) {
-          setListing(result);
-        }
+        // Works for both guests (no token) and logged-in users
+        const result = await getListingById(id, token ?? undefined);
+        if (!cancelled) setListing(result);
       } catch (err) {
         if (!cancelled) {
           setError(
-            err instanceof Error
-              ? err.message
-              : 'Unable to load this listing.',
+            err instanceof Error ? err.message : 'Unable to load this listing.',
           );
         }
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     }
 
     loadListing();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [id, token]);
+
+  function handleMakeOffer() {
+    if (!token) {
+      // Redirect guest to register, preserving their intended destination
+      const redirect = encodeURIComponent(`/listings/${id}/offer`);
+      navigate(`/register?redirect=${redirect}`);
+    } else {
+      navigate(`/listings/${id}/offer`);
+    }
+  }
 
   const ownerName =
     typeof listing?.owner === 'string'
@@ -141,9 +141,7 @@ export default function ListingDetailsPage() {
                   <h2 className="text-sm font-semibold text-emerald-800">
                     Wanted in return
                   </h2>
-                  <p className="mt-2 text-slate-800">
-                    {listing.wantedItem}
-                  </p>
+                  <p className="mt-2 text-slate-800">{listing.wantedItem}</p>
                 </section>
               )}
 
@@ -181,13 +179,23 @@ export default function ListingDetailsPage() {
 
                   <button
                     type="button"
-                    onClick={() =>
-                      navigate(`/listings/${listing._id}/offer`)
-                    }
+                    onClick={handleMakeOffer}
                     className="mt-4 rounded-xl bg-emerald-700 px-5 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800"
                   >
-                    Make an Offer
+                    {token ? 'Make an Offer' : 'Join to Make an Offer'}
                   </button>
+
+                  {!token && (
+                    <p className="mt-2 text-xs text-slate-500">
+                      You need a free account to submit offers.{' '}
+                      <Link
+                        to={`/register?redirect=${encodeURIComponent(`/listings/${id}/offer`)}`}
+                        className="font-medium text-emerald-700 underline"
+                      >
+                        Register now
+                      </Link>
+                    </p>
+                  )}
                 </section>
               )}
 

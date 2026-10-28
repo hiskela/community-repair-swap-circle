@@ -5,10 +5,21 @@ import { loginUser } from '../services/api';
 import { useAuth } from '../auth/AuthContext';
 import PasswordInput from '../components/PasswordInput';
 
+function getSafeRedirect(raw: string | null): string {
+  if (!raw) return '/dashboard';
+  const decoded = decodeURIComponent(raw);
+  if (decoded.startsWith('/') && !decoded.startsWith('//')) return decoded;
+  return '/dashboard';
+}
+
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn } = useAuth();
+
+  const redirectTo = getSafeRedirect(
+    new URLSearchParams(location.search).get('redirect'),
+  );
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,7 +43,7 @@ export default function LoginPage() {
       }
 
       signIn(result);
-      navigate('/dashboard', { replace: true });
+      navigate(redirectTo, { replace: true });
     } catch (err) {
       setError(
         err instanceof Error
@@ -150,7 +161,7 @@ export default function LoginPage() {
           <p className="mt-7 text-center text-sm text-slate-600">
             New to RepairCircle?{' '}
             <Link
-              to="/register"
+              to={`/register${location.search}`}
               className="font-semibold text-emerald-700 hover:text-emerald-900"
             >
               Create an account

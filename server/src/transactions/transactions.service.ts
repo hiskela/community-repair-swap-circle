@@ -531,4 +531,35 @@ for (const participantId of [
 
 return transaction;
 }
+async findOne(transactionId: string, userId: string) {
+  if (!isValidObjectId(transactionId)) {
+    throw new NotFoundException('Transaction not found');
+  }
+
+  const transaction = await this.transactionModel
+    .findById(transactionId)
+    .populate('listing', 'title type category location status')
+    .populate('requester', 'name email')
+    .populate('provider', 'name email')
+    .populate('history.changedBy', 'name')
+    .populate('cancellationRequest.requestedBy', 'name')
+    .populate('cancellationRequest.respondedBy', 'name')
+    .exec();
+
+  if (!transaction) {
+    throw new NotFoundException('Transaction not found');
+  }
+
+  const isParticipant =
+    transaction.requester._id.toString() === userId ||
+    transaction.provider._id.toString() === userId;
+
+  if (!isParticipant) {
+    throw new ForbiddenException(
+      'Only transaction participants can view transaction details',
+    );
+  }
+
+  return transaction;
+}
 }

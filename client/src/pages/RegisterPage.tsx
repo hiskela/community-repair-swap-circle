@@ -1,11 +1,17 @@
 
 import { FormEvent, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { registerUser } from '../services/api';
 import PasswordInput from '../components/PasswordInput';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const redirectParam = new URLSearchParams(location.search).get('redirect');
+  const loginHref = redirectParam
+    ? `/login?redirect=${encodeURIComponent(redirectParam)}`
+    : '/login';
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -20,7 +26,7 @@ export default function RegisterPage() {
 
     try {
       await registerUser({ name: name.trim(), email: email.trim(), password });
-      navigate('/login', {
+      navigate(loginHref, {
         state: { message: 'Your account has been created. You can now sign in.' },
       });
     } catch (err) {
@@ -165,7 +171,7 @@ export default function RegisterPage() {
           <p className="mt-7 text-center text-sm text-slate-600">
             Already have an account?{' '}
             <Link
-              to="/login"
+              to={loginHref}
               className="font-semibold text-emerald-700 hover:text-emerald-900"
             >
               Sign in

@@ -98,14 +98,71 @@ export function createListing(
   });
 }
 
-export function getListingById(id: string, token: string) {
-  return request<Listing>(`/listings/${id}`, {
+export type ListingsResponse = {
+  data: Listing[];
+  pagination: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+};
+
+export function getPublicListings(params?: {
+  keyword?: string;
+  type?: string;
+  category?: string;
+  location?: string;
+  page?: number;
+  limit?: number;
+}) {
+  const query = new URLSearchParams();
+  if (params?.keyword) query.set('keyword', params.keyword);
+  if (params?.type) query.set('type', params.type);
+  if (params?.category) query.set('category', params.category);
+  if (params?.location) query.set('location', params.location);
+  if (params?.page) query.set('page', String(params.page));
+  if (params?.limit) query.set('limit', String(params.limit));
+  const qs = query.toString();
+  return request<ListingsResponse>(`/listings${qs ? `?${qs}` : ''}`);
+}
+
+export function getListingById(id: string, token?: string) {
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  return request<Listing>(`/listings/${id}`, { headers });
+}
+
+export function getMyListings(token: string) {
+  return request<Listing[]>('/listings/my', {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
 }
 
+export function updateListing(
+  id: string,
+  input: Partial<CreateListingInput>,
+  token: string,
+) {
+  return request<Listing>(`/listings/${id}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(input),
+  });
+}
+
+export function deleteListing(id: string, token: string) {
+  return request<{ message: string }>(`/listings/${id}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
 
 export function createOffer(
   input: {
@@ -126,12 +183,20 @@ export function createOffer(
 
 export type Offer = {
   _id: string;
-  listingId: string | {
+  listing?: {
     _id: string;
     title: string;
     type?: string;
     category?: string;
-  };
+    location?: string;
+    status?: string;
+  } | string;
+  listingId?: {
+    _id: string;
+    title: string;
+    type?: string;
+    category?: string;
+  } | string;
   message: string;
   status: 'pending' | 'accepted' | 'rejected' | 'withdrawn';
   createdAt?: string;
@@ -230,7 +295,45 @@ export function getMyTransactions(token: string) {
     },
   });
 }
-
+export function getTransactionById(id: string, token: string) {
+  return request<{
+    _id: string;
+    status: string;
+    listing?: {
+      title?: string;
+      type?: string;
+      category?: string;
+    } | string;
+    requester?: {
+      _id?: string;
+      name?: string;
+    } | string;
+    provider?: {
+      _id?: string;
+      name?: string;
+    } | string;
+    disputeReason?: string;
+    resolutionNotes?: string;
+    requesterConfirmedCompletion?: boolean;
+    providerConfirmedCompletion?: boolean;
+    cancellationRequest?: {
+      reason?: string;
+      status?: string;
+    } | null;
+    history?: {
+      status: string;
+      note: string;
+      changedAt?: string;
+      changedBy?: {
+        name?: string;
+      } | string;
+    }[];
+  }>(`/transactions/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
 export function updateTransactionStatus(
   transactionId: string,
   status: 'in_progress' | 'cancelled',
@@ -364,4 +467,11 @@ export function deleteNotification(
       },
     },
   );
+}
+export function getOfferById(id: string, token: string) {
+  return request<Offer>(`/offers/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
 }

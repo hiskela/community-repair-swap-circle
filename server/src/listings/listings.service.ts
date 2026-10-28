@@ -99,7 +99,13 @@ async findAll(searchDto: SearchListingsDto) {
     },
   };
 }
-
+async findMyListings(userId: string) {
+  return this.listingModel
+    .find({ owner: userId })
+    .populate('owner', 'name')
+    .sort({ createdAt: -1 })
+    .exec();
+}
 private escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -208,4 +214,4 @@ async remove(id: string, userId: string) {
 
   return { message: 'Listing deleted successfully' };
 }
-}1
+}

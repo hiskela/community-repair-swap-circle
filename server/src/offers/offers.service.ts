@@ -97,9 +97,9 @@ if (blockExists) {
       );
     }
 
-    const offer = await this.offerModel.create({
-  listing: listingId,
-  sender: userId,
+   const offer = await this.offerModel.create({
+  listing: new Types.ObjectId(listingId),
+  sender: new Types.ObjectId(userId),
   message: message.trim(),
 });
 
@@ -117,7 +117,7 @@ return offer;
 
 async findSent(userId: string) {
   return this.offerModel
-    .find({ sender: userId })
+    .find({ sender: new Types.ObjectId(userId) })
     .populate({
       path: 'listing',
       select: 'title type category location status',
@@ -144,7 +144,6 @@ async findReceived(userId: string) {
     .sort({ createdAt: -1 })
     .exec();
 }
-
 async accept(offerId: string, userId: string) {
   if (!isValidObjectId(offerId)) {
     throw new BadRequestException('Invalid offer ID');
@@ -296,5 +295,37 @@ await this.notificationsService.create(
 return rejectedOffer;
 }
 
+async findOne(offerId: string, userId: string) {
+  if (!isValidObjectId(offerId)) {
+    throw new NotFoundException('Offer not found');
+  }
+
+  const offer = await this.offerModel
+    .findById(offerId)
+    .populate('sender', 'name')
+    .populate({
+      path: 'listing',
+      select: 'title type category location owner status',
+    })
+    .exec();
+
+  if (!offer) {
+    throw new NotFoundException('Offer not found');
+  }
+
+  const listing = offer.listing as any;
+  const sender = offer.sender as any;
+
+  const isSender = sender?._id?.toString() === userId;
+  const isListingOwner = listing?.owner?.toString() === userId;
+
+  if (!isSender && !isListingOwner) {
+    throw new ForbiddenException(
+      'You cannot view this offer',
+    );
+  }
+
+  return offer;
+}
 
 }

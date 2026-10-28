@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './auth/AuthContext';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
 
+import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
@@ -14,7 +15,9 @@ import CreateOfferPage from './pages/CreateOfferPage';
 import SentOffersPage from './pages/SentOffersPage';
 import ReceivedOffersPage from './pages/ReceivedOffersPage';
 import MyTransactionsPage from './pages/MyTransactionsPage';
+import MyListingsPage from './pages/MyListingsPage';
 import NotificationsPage from './pages/NotificationsPage';
+
 function AppRoutes() {
   const { token } = useAuth();
 
@@ -23,11 +26,13 @@ function AppRoutes() {
       <Navbar />
 
       <Routes>
+        {/* Public homepage — guests see landing page, logged-in users see dashboard */}
         <Route
           path="/"
-          element={<Navigate to={token ? '/dashboard' : '/login'} replace />}
+          element={ <HomePage />}
         />
 
+        {/* Auth pages — redirect to dashboard if already logged in */}
         <Route
           path="/login"
           element={token ? <Navigate to="/dashboard" replace /> : <LoginPage />}
@@ -37,18 +42,23 @@ function AppRoutes() {
           element={token ? <Navigate to="/dashboard" replace /> : <RegisterPage />}
         />
 
+        {/* Public listing browsing — no authentication required */}
+        <Route path="/listings" element={<ListingsPage />} />
+        <Route path="/listings/:id" element={<ListingDetailsPage />} />
+
+        {/* Protected routes — require authentication */}
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/listings" element={<ListingsPage />} />
           <Route path="/listings/new" element={<CreateListingPage />} />
-          <Route path="/listings/:id" element={<ListingDetailsPage />} />
           <Route path="/listings/:id/offer" element={<CreateOfferPage />} />
+          <Route path="/my-listings" element={<MyListingsPage />} />
           <Route path="/offers/sent" element={<SentOffersPage />} />
           <Route path="/offers/received" element={<ReceivedOffersPage />} />
           <Route path="/transactions" element={<MyTransactionsPage />} />
-<Route path="/notifications" element={<NotificationsPage />} />
+          <Route path="/notifications" element={<NotificationsPage />} />
         </Route>
 
+        {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

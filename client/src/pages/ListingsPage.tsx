@@ -143,7 +143,8 @@ export default function ListingsPage() {
 
       if (result && typeof result === 'object' && !Array.isArray(result)) {
         const object = result as Record<string, unknown>;
-        const totalPages = object.totalPages ?? object.pages;
+        const pagination = object.pagination as Record<string, unknown> | undefined;
+        const totalPages = pagination?.totalPages ?? object.totalPages ?? object.pages;
 
         if (typeof totalPages === 'number') {
           more = page < totalPages;

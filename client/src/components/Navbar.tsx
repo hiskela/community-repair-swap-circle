@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+
+import { useEffect, useState, type ReactNode } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { getNotifications, type AppNotification } from '../services/api';
@@ -9,6 +10,7 @@ const menus = [
     items: [
       { to: '/listings', label: 'Browse Listings' },
       { to: '/listings/new', label: 'Create Listing' },
+      { to: '/my-listings', label: 'My Listings' },
     ],
   },
   {
@@ -32,6 +34,8 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+
 
   useEffect(() => {
     if (!token) {
@@ -61,6 +65,8 @@ export default function Navbar() {
   const closeMenus = () => {
     setMobileMenuOpen(false);
     setExpandedMenu(null);
+  setOpenDropdown(null);
+
   };
 
   const handleLogout = () => {
@@ -88,7 +94,7 @@ export default function Navbar() {
 
   const renderDropdown = (
     label: string,
-    children: React.ReactNode,
+    children: ReactNode,
     active: boolean,
   ) => (
     <div key={label} className="group relative">
@@ -179,33 +185,40 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 border-b border-emerald-100 bg-white/95 shadow-sm backdrop-blur">
       <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <Link
-          to={token ? '/dashboard' : '/login'}
+          to="/"
           onClick={closeMenus}
           className="flex min-w-0 items-center gap-2"
+          aria-label="Repair and Swap Circle homepage"
         >
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-2xl">
             ♻️
           </span>
           <span className="text-base font-extrabold tracking-tight text-emerald-900 sm:text-lg">
-            Repair & Swap Circle
+            Repair &amp; Swap Circle
           </span>
         </Link>
 
-        <div className="flex items-center gap-2">
-          {token && <div className="hidden md:block">{notificationLink}</div>}
+        <div className="flex items-center gap-2 md:hidden">
+          {token && notificationLink}
 
           <button
             type="button"
             onClick={() => setMobileMenuOpen((open) => !open)}
             aria-label="Toggle navigation menu"
             aria-expanded={mobileMenuOpen}
-            className="rounded-xl p-2 text-gray-700 transition hover:bg-emerald-50 md:hidden"
+            className="rounded-xl p-2 text-gray-700 transition hover:bg-emerald-50"
           >
-            <span className="text-2xl">{mobileMenuOpen ? '✕' : '☰'}</span>
+            <span className="text-2xl">
+              {mobileMenuOpen ? '✕' : '☰'}
+            </span>
           </button>
         </div>
 
         <div className="hidden items-center gap-1 md:flex">
+          <NavLink to="/" className={linkClass} end>
+            Home
+          </NavLink>
+
           {token ? (
             <>
               <NavLink to="/dashboard" className={linkClass} end>
@@ -234,12 +247,19 @@ export default function Navbar() {
                 accountMenu,
                 location.pathname === '/profile',
               )}
+
+              <div className="ml-1">{notificationLink}</div>
             </>
           ) : (
             <>
+              <NavLink to="/listings" className={linkClass}>
+                Browse
+              </NavLink>
+
               <NavLink to="/login" className={linkClass}>
                 Login
               </NavLink>
+
               <NavLink
                 to="/register"
                 className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800"
@@ -254,6 +274,15 @@ export default function Navbar() {
       {mobileMenuOpen && (
         <div className="border-t border-emerald-100 bg-white px-4 py-4 shadow-lg md:hidden">
           <div className="mx-auto flex max-w-7xl flex-col gap-1">
+            <NavLink
+              to="/"
+              className={linkClass}
+              end
+              onClick={closeMenus}
+            >
+              Home
+            </NavLink>
+
             {token ? (
               <>
                 <NavLink
@@ -263,19 +292,6 @@ export default function Navbar() {
                   onClick={closeMenus}
                 >
                   Dashboard
-                </NavLink>
-
-                <NavLink
-                  to="/notifications"
-                  className={linkClass}
-                  onClick={closeMenus}
-                >
-                  🔔 Notifications
-                  {unreadCount > 0 && (
-                    <span className="ml-2 rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">
-                      {unreadCount > 99 ? '99+' : unreadCount}
-                    </span>
-                  )}
                 </NavLink>
 
                 {menus.map((menu) => (
@@ -328,6 +344,19 @@ export default function Navbar() {
                   👤 My Profile
                 </NavLink>
 
+                <NavLink
+                  to="/notifications"
+                  className={linkClass}
+                  onClick={closeMenus}
+                >
+                  🔔 Notifications
+                  {unreadCount > 0 && (
+                    <span className="ml-2 rounded-full bg-red-600 px-2 py-0.5 text-xs text-white">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </NavLink>
+
                 <button
                   type="button"
                   onClick={handleLogout}
@@ -339,12 +368,21 @@ export default function Navbar() {
             ) : (
               <>
                 <NavLink
+                  to="/listings"
+                  className={linkClass}
+                  onClick={closeMenus}
+                >
+                  Browse
+                </NavLink>
+
+                <NavLink
                   to="/login"
                   className={linkClass}
                   onClick={closeMenus}
                 >
                   Login
                 </NavLink>
+
                 <NavLink
                   to="/register"
                   className="rounded-xl bg-emerald-700 px-3 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800"

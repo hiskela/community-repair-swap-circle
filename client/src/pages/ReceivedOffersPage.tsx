@@ -162,11 +162,12 @@ export default function ReceivedOffersPage() {
         ) : (
           <div className="space-y-4">
             {offers.map((offer) => {
-              const listing =
-                typeof offer.listingId === 'object' &&
-                offer.listingId !== null
-                  ? offer.listingId
-                  : null;
+            const listingData = offer.listing ?? offer.listingId;
+
+const listing =
+  typeof listingData === 'object' && listingData !== null
+    ? listingData
+    : null;
 
               return (
                 <article

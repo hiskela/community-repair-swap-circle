@@ -28,8 +28,7 @@ export class OffersController {
   ) {
     return this.offersService.create(createOfferDto, req.user.userId);
   }
-
-  @Get('sent')
+ @Get('sent')
   @ApiOperation({ summary: 'View offers you submitted' })
   findSent(@Request() req: { user: { userId: string } }) {
     return this.offersService.findSent(req.user.userId);
@@ -39,6 +38,16 @@ export class OffersController {
   @ApiOperation({ summary: 'View offers on your listings' })
   findReceived(@Request() req: { user: { userId: string } }) {
     return this.offersService.findReceived(req.user.userId);
+  }
+
+ 
+  @Get(':id')
+  @ApiOperation({ summary: 'View details of an offer you are involved in' })
+  findOne(
+    @Param('id') id: string,
+    @Request() req: { user: { userId: string } },
+  ) {
+    return this.offersService.findOne(id, req.user.userId);
   }
 
   @Patch(':id/accept')

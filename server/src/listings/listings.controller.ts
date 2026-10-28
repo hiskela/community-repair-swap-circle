@@ -55,6 +55,15 @@ export class ListingsController {
 findAll(@Query() searchDto: SearchListingsDto) {
   return this.listingsService.findAll(searchDto);
 }
+@Get('my')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
+@ApiOperation({ summary: 'Get your own listings' })
+findMyListings(@Req() request: AuthenticatedRequest) {
+  return this.listingsService.findMyListings(
+    request.user.userId,
+  );
+}
   @Get(':id')
   @ApiOperation({ summary: 'View an open listing' })
   findOne(@Param('id') id: string) {

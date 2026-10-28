@@ -93,4 +93,11 @@ resolveDispute(
 ) {
   return this.transactionsService.resolveDispute(id,req.user.userId, dto);
 }
+@Get(':id')
+findOne(
+  @Param('id') id: string,
+  @Request() req: { user: { userId: string } },
+) {
+  return this.transactionsService.findOne(id, req.user.userId);
+}
 }

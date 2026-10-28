@@ -90,7 +90,7 @@ export default function DashboardPage() {
 
       const results = await Promise.allSettled([
         fetchResource('/users/me', token!),
-        fetchResource('/listings', token!),
+        fetchResource('/listings/my', token!),
         fetchResource('/offers/sent', token!),
         fetchResource('/offers/received', token!),
         fetchResource('/transactions/my', token!),
@@ -152,7 +152,7 @@ export default function DashboardPage() {
       value: data.listings,
       icon: '▤',
       description: 'Items and repair requests',
-      to: '/listings',
+      to: '/listings/my',
     },
     {
       label: 'Sent offers',
