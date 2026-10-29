@@ -502,3 +502,35 @@ export function getOfferById(id: string, token: string) {
     },
   });
 }
+export interface AdminOverview {
+  users: {
+    total: number;
+    active: number;
+    inactive: number;
+  };
+  listings: {
+    total: number;
+    open: number;
+    hidden: number;
+  };
+  transactions: {
+    total: number;
+    inProgress: number;
+    completed: number;
+    disputed: number;
+  };
+  reports: {
+    total: number;
+    pending: number;
+    reviewed: number;
+    dismissed: number;
+  };
+}
+
+export function getAdminOverview(token: string) {
+  return request<AdminOverview>('/admin/overview', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
