@@ -7,6 +7,7 @@ import {
   confirmTransactionCompletion,
   requestTransactionCancellation,
   respondToCancellationRequest,
+createTransactionDispute,
   type Transaction,
 } from '../services/api';
 import { useAuth } from '../auth/AuthContext';
@@ -51,6 +52,9 @@ export default function MyTransactionsPage() {
   const [cancellationReasons, setCancellationReasons] = useState<
     Record<string, string>
   >({});
+const [disputeReasons, setDisputeReasons] = useState<
+  Record<string, string>
+>({});
 
   const currentUserId = getCurrentUserId(token ?? '');
 
@@ -130,7 +134,48 @@ export default function MyTransactionsPage() {
       setActioningId('');
     }
   }
+async function handleRaiseDispute(transaction: Transaction) {
+  if (!token) return;
 
+  const reason = disputeReasons[transaction._id]?.trim() ?? '';
+
+  if (reason.length < 10 || reason.length > 1000) {
+    setActionError(
+      'The dispute reason must be between 10 and 1000 characters.',
+    );
+    return;
+  }
+
+  if (
+    transaction.status !== 'agreed' &&
+    transaction.status !== 'in_progress'
+  ) {
+    setActionError('This transaction cannot be disputed in its current status.');
+    return;
+  }
+
+  setActioningId(transaction._id);
+  setActionError('');
+
+  try {
+    await createTransactionDispute(transaction._id, reason, token);
+
+    setDisputeReasons((current) => ({
+      ...current,
+      [transaction._id]: '',
+    }));
+
+    await loadTransactions();
+  } catch (error) {
+    setActionError(
+      error instanceof Error
+        ? error.message
+        : 'Failed to submit dispute.',
+    );
+  } finally {
+    setActioningId('');
+  }
+}
   async function handleRequestCancellation(transaction: Transaction) {
     if (!token) return;
 
@@ -248,51 +293,105 @@ export default function MyTransactionsPage() {
         </div>
       )}
 
-      <div className="space-y-4">
-        {transactions.map((transaction) => (
-          <TransactionCard
-            key={transaction._id}
-            transaction={transaction}
-            currentUserId={currentUserId}
-            actioningId={actioningId}
-            cancellationReason={
-              cancellationReasons[transaction._id] ?? ''
-            }
-            isCancellationFormOpen={
-              openCancellationForm === transaction._id
-            }
-            onStart={(item) =>
-              void handleStatusUpdate(item, 'in_progress')
-            }
-            onCancelAgreed={(item) =>
-              void handleStatusUpdate(item, 'cancelled')
-            }
-            onConfirmCompletion={(item) =>
-              void handleConfirmCompletion(item)
-            }
-            onRequestCancellation={(item) =>
-              void handleRequestCancellation(item)
-            }
-            onRespondToCancellation={(item, status) =>
-              void handleCancellationResponse(item, status)
-            }
-            onCancellationReasonChange={(value) =>
-              setCancellationReasons((current) => ({
-                ...current,
-                [transaction._id]: value,
-              }))
-            }
-            onToggleCancellationForm={() => {
-              setActionError('');
-              setOpenCancellationForm(transaction._id);
+     <div className="space-y-4">
+  {transactions.map((transaction) => (
+    <div key={transaction._id}>
+      <TransactionCard
+        transaction={transaction}
+        currentUserId={currentUserId}
+        actioningId={actioningId}
+        cancellationReason={cancellationReasons[transaction._id] ?? ''}
+        isCancellationFormOpen={
+          openCancellationForm === transaction._id
+        }
+        onStart={(item) =>
+          void handleStatusUpdate(item, 'in_progress')
+        }
+        onCancelAgreed={(item) =>
+          void handleStatusUpdate(item, 'cancelled')
+        }
+        onConfirmCompletion={(item) =>
+          void handleConfirmCompletion(item)
+        }
+        onRequestCancellation={(item) =>
+          void handleRequestCancellation(item)
+        }
+        onRespondToCancellation={(item, status) =>
+          void handleCancellationResponse(item, status)
+        }
+        onCancellationReasonChange={(value) =>
+          setCancellationReasons((current) => ({
+            ...current,
+            [transaction._id]: value,
+          }))
+        }
+        onToggleCancellationForm={() => {
+          setActionError('');
+          setOpenCancellationForm(transaction._id);
+        }}
+        onClearCancellationForm={() => {
+          setOpenCancellationForm('');
+          setActionError('');
+        }}
+      />
+
+      {(transaction.status === 'agreed' ||
+        transaction.status === 'in_progress') && (
+        <div className="mt-3 rounded-xl border border-amber-200 bg-white p-5">
+          <h3 className="font-semibold text-slate-900">
+            Having a problem with this transaction?
+          </h3>
+
+          <p className="mt-1 text-sm text-slate-600">
+            Explain what went wrong. An administrator can review your dispute.
+          </p>
+
+          <form
+            className="mt-4 space-y-3"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleRaiseDispute(transaction);
             }}
-            onClearCancellationForm={() => {
-              setOpenCancellationForm('');
-              setActionError('');
-            }}
-          />
-        ))}
-      </div>
+          >
+            <label
+              htmlFor={`dispute-${transaction._id}`}
+              className="block text-sm font-medium text-slate-700"
+            >
+              Dispute reason
+            </label>
+
+            <textarea
+              id={`dispute-${transaction._id}`}
+              value={disputeReasons[transaction._id] ?? ''}
+              onChange={(event) =>
+                setDisputeReasons((current) => ({
+                  ...current,
+                  [transaction._id]: event.target.value,
+                }))
+              }
+              minLength={10}
+              maxLength={1000}
+              rows={3}
+              required
+              placeholder="Describe the problem (10–1000 characters)"
+              className="w-full rounded-lg border border-slate-300 p-3 text-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-100"
+            />
+
+            <button
+              type="submit"
+              disabled={actioningId === transaction._id}
+              className="rounded-lg bg-amber-600 px-4 py-2 font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
+            >
+              {actioningId === transaction._id
+                ? 'Submitting...'
+                : 'Raise a Dispute'}
+            </button>
+          </form>
+        </div>
+      )}
+    </div>
+  ))}
+</div>
     </main>
   );
 }

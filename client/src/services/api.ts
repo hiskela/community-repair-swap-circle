@@ -377,7 +377,22 @@ export function confirmTransactionCompletion(
     },
   );
 }
-
+export function createTransactionDispute(
+  transactionId: string,
+  reason: string,
+  token: string,
+) {
+  return request<Transaction>(
+    `/transactions/${transactionId}/dispute`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ reason }),
+    },
+  );
+}
 export function requestTransactionCancellation(
   transactionId: string,
   reason: string,

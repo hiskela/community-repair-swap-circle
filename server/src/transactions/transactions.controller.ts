@@ -84,14 +84,18 @@ export class TransactionsController {
     return this.transactionsService.openDispute(id, req.user.userId, dto);
   }
 @Patch(':id/resolve-dispute')
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(RolesGuard)
 @Roles(UserRole.ADMIN)
 resolveDispute(
   @Param('id') id: string,
-@Req() req:any,
+  @Request() req: { user: { userId: string } },
   @Body() dto: ResolveDisputeDto,
 ) {
-  return this.transactionsService.resolveDispute(id,req.user.userId, dto);
+  return this.transactionsService.resolveDispute(
+    id,
+    req.user.userId,
+    dto,
+  );
 }
 @Get(':id')
 findOne(

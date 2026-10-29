@@ -17,7 +17,8 @@ import ReceivedOffersPage from './pages/ReceivedOffersPage';
 import MyTransactionsPage from './pages/MyTransactionsPage';
 import MyListingsPage from './pages/MyListingsPage';
 import NotificationsPage from './pages/NotificationsPage';
-
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import AdminLayout from './components/admin/AdminLayout';
 function AppRoutes() {
   const { token } = useAuth();
 
@@ -58,7 +59,11 @@ function AppRoutes() {
           <Route path="/transactions" element={<MyTransactionsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
         </Route>
-
+<Route element={<ProtectedRoute requiredRole="admin" />}>
+  <Route path="/admin" element={<AdminLayout />}>
+    <Route index element={<AdminDashboardPage />} />
+  </Route>
+</Route>
         {/* Catch-all redirect */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

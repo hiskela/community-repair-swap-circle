@@ -84,18 +84,18 @@ if (blockExists) {
 }
 
     const existingOffer = await this.offerModel
-      .findOne({
-        listing: listingId,
-        sender: userId,
-        status: OfferStatus.PENDING,
-      })
-      .exec();
+  .findOne({
+    listing: new Types.ObjectId(listingId),
+    sender: new Types.ObjectId(userId),
+    status: OfferStatus.PENDING,
+  })
+  .exec();
 
-    if (existingOffer) {
-      throw new BadRequestException(
-        'You already have a pending offer for this listing',
-      );
-    }
+if (existingOffer) {
+  throw new ConflictException(
+    'You already have a pending offer for this listing.',
+  );
+}
 
    const offer = await this.offerModel.create({
   listing: new Types.ObjectId(listingId),

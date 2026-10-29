@@ -8,11 +8,18 @@ ForbiddenException
 import { InjectModel } from '@nestjs/mongoose';
 import { isValidObjectId, Model, QueryFilter } from 'mongoose';
 import { UpdateListingDto } from './dto/update-listing.dto';
+import { Offer, OfferDocument, OfferStatus } from '../offers/schemas/offer.schema';
+
 import {
   Listing,
   ListingDocument,
   ListingStatus,
 } from './schemas/listing.schema';
+import {
+  Transaction,
+  TransactionDocument,
+  TransactionStatus,
+} from '../transactions/schemas/transaction.schema';
 import { CreateListingDto } from './dto/create-listing.dto';
 import { SearchListingsDto } from './dto/search-listings.dto';
 
@@ -22,6 +29,11 @@ export class ListingsService {
   constructor(
     @InjectModel(Listing.name)
     private readonly listingModel: Model<ListingDocument>,
+  @InjectModel(Offer.name)
+  private readonly offerModel: Model<OfferDocument>,
+
+  @InjectModel(Transaction.name)
+  private readonly transactionModel: Model<TransactionDocument>,
   ) {}
 
   async create(createListingDto: CreateListingDto, userId: string) {
@@ -190,6 +202,7 @@ updates.wantedItem=updateListingDto.wantedItem.trim()
     .exec();
 }
 
+
 async remove(id: string, userId: string) {
   if (!isValidObjectId(id)) {
     throw new BadRequestException('Invalid listing ID');
@@ -213,10 +226,39 @@ async remove(id: string, userId: string) {
     );
   }
 
+  const pendingOffers = await this.offerModel.countDocuments({
+    listing: listing._id,
+    status: OfferStatus.PENDING,
+  }).exec();
+
+  if (pendingOffers > 0) {
+    throw new BadRequestException(
+      'This listing cannot be deleted while it has pending offers. Reject or withdraw the offers first.',
+    );
+  }
+
+  const activeTransactions = await this.transactionModel.countDocuments({
+    listing: listing._id,
+    status: {
+      $in: [
+        TransactionStatus.AGREED,
+        TransactionStatus.IN_PROGRESS,
+        TransactionStatus.DISPUTED,
+      ],
+    },
+  }).exec();
+
+  if (activeTransactions > 0) {
+    throw new BadRequestException(
+      'This listing cannot be deleted while it has an active transaction.',
+    );
+  }
+
   await listing.deleteOne();
 
   return { message: 'Listing deleted successfully' };
 }
+
 async setVisibility(
   id: string,
   userId: string,
