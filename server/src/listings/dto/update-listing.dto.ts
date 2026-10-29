@@ -35,4 +35,8 @@ export class UpdateListingDto {
   @IsString()
   @MaxLength(200)
   location?: string;
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  wantedItem?: string;
 }

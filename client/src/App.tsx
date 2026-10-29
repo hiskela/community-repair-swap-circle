@@ -3,7 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthContext';
 import Navbar from './components/Navbar';
 import ProtectedRoute from './components/ProtectedRoute';
-
+import EditListingPage from './pages/EditListingPage';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
@@ -52,6 +52,7 @@ function AppRoutes() {
           <Route path="/listings/new" element={<CreateListingPage />} />
           <Route path="/listings/:id/offer" element={<CreateOfferPage />} />
           <Route path="/my-listings" element={<MyListingsPage />} />
+<Route path="/listings/:id/edit" element={<EditListingPage />} />
           <Route path="/offers/sent" element={<SentOffersPage />} />
           <Route path="/offers/received" element={<ReceivedOffersPage />} />
           <Route path="/transactions" element={<MyTransactionsPage />} />

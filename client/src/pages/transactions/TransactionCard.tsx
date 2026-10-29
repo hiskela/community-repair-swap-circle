@@ -53,10 +53,15 @@ export default function TransactionCard({
   onToggleCancellationForm,
   onClearCancellationForm,
 }: Props) {
-  const pendingCancellation =
-    transaction.cancellationRequest?.status === 'pending';
+  const cancellationStatus = transaction.cancellationRequest?.status
+    ?.toLowerCase()
+    .trim();
+
+  const pendingCancellation = cancellationStatus === 'pending';
 
   const isRequester =
+    typeof transaction.requester === 'object' &&
+    transaction.requester !== null &&
     transaction.requester._id === currentUserId;
 
   const myConfirmation = isRequester
@@ -66,6 +71,9 @@ export default function TransactionCard({
   const otherConfirmation = isRequester
     ? transaction.providerConfirmedCompletion
     : transaction.requesterConfirmedCompletion;
+
+  const canConfirmCompletion =
+    transaction.status === 'in_progress' && !pendingCancellation;
 
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -157,7 +165,7 @@ export default function TransactionCard({
 
       {transaction.status === 'in_progress' && (
         <>
-          {!pendingCancellation && (
+          {canConfirmCompletion && (
             <TransactionActions
               transaction={transaction}
               actioningId={actioningId}
@@ -165,6 +173,16 @@ export default function TransactionCard({
               onCancelAgreed={onCancelAgreed}
               onConfirmCompletion={onConfirmCompletion}
             />
+          )}
+
+          {pendingCancellation && (
+            <div
+              role="status"
+              className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800"
+            >
+              Completion is unavailable while the cancellation request is
+              awaiting a response.
+            </div>
           )}
 
           <CancellationRequest

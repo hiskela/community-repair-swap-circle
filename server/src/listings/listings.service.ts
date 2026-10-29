@@ -177,7 +177,10 @@ async update(
   if (updateListingDto.location !== undefined) {
     updates.location = updateListingDto.location.trim();
   }
+if(updateListingDto.wantedItem !==undefined){
+updates.wantedItem=updateListingDto.wantedItem.trim()
 
+}
   return this.listingModel
     .findByIdAndUpdate(
       id,

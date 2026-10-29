@@ -330,6 +330,7 @@ async respondToCancellation(
 
   return transaction;
 }
+
 async confirmCompletion(transactionId: string, userId: string) {
   if (!isValidObjectId(transactionId)) {
     throw new BadRequestException('Invalid transaction ID');
@@ -352,9 +353,24 @@ async confirmCompletion(transactionId: string, userId: string) {
     );
   }
 
+  if (transaction.cancellationRequest?.status === 'pending') {
+    throw new ConflictException(
+      'Completion is unavailable while a cancellation request is pending.',
+    );
+  }
+
   if (transaction.status !== TransactionStatus.IN_PROGRESS) {
     throw new ConflictException(
-      'Only in-progress transactions can be completed',
+      'Only in-progress transactions can be completed.',
+    );
+  }
+
+  if (
+    (isRequester && transaction.requesterConfirmedCompletion) ||
+    (isProvider && transaction.providerConfirmedCompletion)
+  ) {
+    throw new ConflictException(
+      'You have already confirmed completion.',
     );
   }
 
@@ -366,10 +382,11 @@ async confirmCompletion(transactionId: string, userId: string) {
     transaction.providerConfirmedCompletion = true;
   }
 
-  if (
+  const bothConfirmed =
     transaction.requesterConfirmedCompletion &&
-    transaction.providerConfirmedCompletion
-  ) {
+    transaction.providerConfirmedCompletion;
+
+  if (bothConfirmed) {
     transaction.status = TransactionStatus.COMPLETED;
   }
 
@@ -378,32 +395,31 @@ async confirmCompletion(transactionId: string, userId: string) {
   transaction.history.push({
     status: transaction.status,
     changedBy: new Types.ObjectId(userId),
-    note:
-      transaction.status === TransactionStatus.COMPLETED
-        ? 'Both participants confirmed completion'
-        : 'Participant confirmed completion',
+    note: bothConfirmed
+      ? 'Both participants confirmed completion'
+      : 'Participant confirmed completion',
   });
 
- await transaction.save();
+  await transaction.save();
 
-const otherParticipantId =
-  transaction.requester.toString() === userId
+  const otherParticipantId = isRequester
     ? transaction.provider.toString()
     : transaction.requester.toString();
 
-await this.notificationsService.create(
-  otherParticipantId,
-  NotificationType.TRANSACTION_UPDATED,
-  transaction.status === TransactionStatus.COMPLETED
-    ? 'Your transaction has been completed by mutual confirmation.'
-    : 'The other participant confirmed transaction completion.',
-  userId,
-  transaction._id.toString(),
-  'transaction',
-);
+  await this.notificationsService.create(
+    otherParticipantId,
+    NotificationType.TRANSACTION_UPDATED,
+    bothConfirmed
+      ? 'Your transaction has been completed by mutual confirmation.'
+      : 'The other participant confirmed transaction completion.',
+    userId,
+    transaction._id.toString(),
+    'transaction',
+  );
 
-return transaction;
+  return transaction;
 }
+
 async openDispute(
   transactionId: string,
   userId: string,

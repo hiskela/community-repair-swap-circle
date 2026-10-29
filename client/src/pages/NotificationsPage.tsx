@@ -396,8 +396,10 @@ useEffect(() => {
             </Link>
           </div>
         ) : (
-          <section className="space-y-3" aria-label="Your notifications">
-            {notifications.map((notification) => (
+<section
+  className="max-h-[65vh] space-y-3 overflow-y-auto pr-2"
+  aria-label="Your notifications"
+>            {notifications.map((notification) => (
               <div
                 key={notification._id}
                 className={`rounded-2xl border p-5 transition hover:shadow-md ${
