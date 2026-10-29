@@ -1,7 +1,7 @@
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException,ConflictException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model,Types} from 'mongoose';
 import { User } from '../users/schemas/user.schema';
 import { Listing, ListingStatus } from '../listings/schemas/listing.schema';
 import {
@@ -92,12 +92,81 @@ export class AdminService {
 async getDisputes() {
   return this.transactionModel
     .find({ status: TransactionStatus.DISPUTED })
-    .populate('listing', 'title type category')
+    .populate('listing', 'title type category location')
     .populate('requester', 'name email')
     .populate('provider', 'name email')
     .populate('disputeOpenedBy', 'name email')
     .sort({ updatedAt: -1 })
-    .lean()
     .exec();
+}
+async resolveDispute(
+  transactionId: string,
+  adminId: string,
+  decision: TransactionStatus,
+  notes: string,
+) {
+  if (!Types.ObjectId.isValid(transactionId)) {
+    throw new BadRequestException('Invalid transaction ID');
+  }
+
+  if (!Types.ObjectId.isValid(adminId)) {
+    throw new BadRequestException('Invalid administrator ID');
+  }
+
+  const allowedDecisions: TransactionStatus[] = [
+    TransactionStatus.IN_PROGRESS,
+    TransactionStatus.CANCELLED,
+    TransactionStatus.COMPLETED,
+  ];
+
+  if (!allowedDecisions.includes(decision)) {
+    throw new BadRequestException('Invalid resolution decision');
+  }
+
+  const normalizedNotes = notes.trim();
+
+  if (normalizedNotes.length < 10 || normalizedNotes.length > 1000) {
+    throw new BadRequestException(
+      'Resolution notes must be between 10 and 1000 characters',
+    );
+  }
+
+  const transaction = await this.transactionModel.findOneAndUpdate(
+    {
+      _id: new Types.ObjectId(transactionId),
+      status: TransactionStatus.DISPUTED,
+    },
+    {
+      $set: {
+        status: decision,
+        resolutionNotes: normalizedNotes,
+      },
+      $push: {
+        history: {
+          status: decision,
+          changedBy: new Types.ObjectId(adminId),
+          note: `Admin resolved dispute: ${normalizedNotes}`,
+          changedAt: new Date(),
+        },
+      },
+    },
+    { new: true, runValidators: true },
+  ).exec();
+
+  if (transaction) {
+    return transaction;
+  }
+
+  const exists = await this.transactionModel.exists({
+    _id: new Types.ObjectId(transactionId),
+  });
+
+  if (!exists) {
+    throw new NotFoundException('Transaction not found');
+  }
+
+  throw new ConflictException(
+    'This transaction is not currently disputed or has already been resolved',
+  );
 }
 }

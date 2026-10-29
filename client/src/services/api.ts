@@ -534,3 +534,63 @@ export function getAdminOverview(token: string) {
     },
   });
 }
+export type AdminDispute = {
+  _id: string;
+  status: 'disputed';
+  disputeReason?: string;
+  resolutionNotes?: string;
+  disputeOpenedBy?: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  requester: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  provider: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  listing: {
+    _id: string;
+    title: string;
+    type: string;
+    category: string;
+    location?: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type AdminDisputeDecision =
+  | 'in_progress'
+  | 'cancelled'
+  | 'completed';
+
+export function getAdminDisputes(token: string) {
+  return request<AdminDispute[]>('/admin/disputes', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function resolveAdminDispute(
+  id: string,
+  decision: AdminDisputeDecision,
+  notes: string,
+  token: string,
+) {
+  return request<unknown>(`/admin/disputes/${id}/resolve`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ decision, notes }),
+  });
+}
+
