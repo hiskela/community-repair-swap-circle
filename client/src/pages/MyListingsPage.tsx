@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import {
   deleteListing,
   getMyListings,
+setListingVisibility,
   type Listing,
 } from '../services/api';
 
@@ -20,7 +21,7 @@ export default function MyListingsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
-
+const [visibilityId, setVisibilityId] = useState<string | null>(null);
   const loadListings = useCallback(async () => {
     if (!token) {
       setError('Please log in to view your listings.');
@@ -72,6 +73,33 @@ export default function MyListingsPage() {
       setDeletingId(null);
     }
   }
+async function handleVisibility(listing: Listing) {
+  if (!token) return;
+
+  const hidden = listing.status === 'open';
+  setError('');
+  setVisibilityId(listing._id);
+
+  try {
+    await setListingVisibility(listing._id, hidden, token);
+
+    setListings((current) =>
+      current.map((item) =>
+        item._id === listing._id
+          ? { ...item, status: hidden ? 'hidden' : 'open' }
+          : item,
+      ),
+    );
+  } catch (err) {
+    setError(
+      err instanceof Error
+        ? err.message
+        : 'Could not change listing visibility.',
+    );
+  } finally {
+    setVisibilityId(null);
+  }
+}
 
   return (
     <main className="mx-auto mt-8 max-w-7xl px-4 pb-12 sm:px-6 lg:px-8">
@@ -191,29 +219,58 @@ export default function MyListingsPage() {
                 </dl>
 
                 <div className="mt-auto flex gap-3 pt-6">
-                  {listing.status === 'open' ? (
-                    <>
-                      <Link
-                        to={`/listings/${listing._id}/edit`}
-                        className="flex-1 rounded-xl border border-emerald-200 px-3 py-2.5 text-center text-sm font-semibold text-emerald-800 transition hover:bg-emerald-50"
-                      >
-                        Edit
-                      </Link>
+                 {listing.status === 'open' ? (
+  <div className="flex w-full gap-3">
+    <Link
+      to={`/listings/${listing._id}/edit`}
+      className="flex-1 rounded-xl border border-emerald-200 px-3 py-2.5 text-center text-sm font-semibold text-emerald-800 transition hover:bg-emerald-50"
+    >
+      Edit
+    </Link>
 
-                      <button
-                        type="button"
-                        onClick={() => void handleDelete(listing)}
-                        disabled={deletingId === listing._id}
-                        className="flex-1 rounded-xl border border-red-200 px-3 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {deletingId === listing._id ? 'Deleting...' : 'Delete'}
-                      </button>
-                    </>
-                  ) : (
-                    <p className="w-full rounded-xl bg-gray-50 px-3 py-2.5 text-center text-sm text-gray-500">
-                      Only open listings can be edited or deleted.
-                    </p>
-                  )}
+    <button
+      type="button"
+      onClick={() => void handleVisibility(listing)}
+      disabled={visibilityId === listing._id}
+      className="flex-1 rounded-xl border border-amber-200 px-3 py-2.5 text-sm font-semibold text-amber-800 hover:bg-amber-50 disabled:opacity-50"
+    >
+      {visibilityId === listing._id ? 'Hiding...' : 'Hide'}
+    </button>
+
+    <button
+      type="button"
+      onClick={() => void handleDelete(listing)}
+      disabled={deletingId === listing._id}
+      className="flex-1 rounded-xl border border-red-200 px-3 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
+    >
+      {deletingId === listing._id ? 'Deleting...' : 'Delete'}
+    </button>
+  </div>
+) : listing.status === 'hidden' ? (
+  <div className="flex w-full gap-3">
+    <button
+      type="button"
+      onClick={() => void handleVisibility(listing)}
+      disabled={visibilityId === listing._id}
+      className="flex-1 rounded-xl bg-emerald-700 px-3 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"
+    >
+      {visibilityId === listing._id ? 'Publishing...' : 'Republish'}
+    </button>
+
+    <button
+      type="button"
+      onClick={() => void handleDelete(listing)}
+      disabled={deletingId === listing._id}
+      className="flex-1 rounded-xl border border-red-200 px-3 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
+    >
+      {deletingId === listing._id ? 'Deleting...' : 'Delete'}
+    </button>
+  </div>
+) : (
+  <p className="w-full rounded-xl bg-gray-300 px-3 py-2.5 text-center text-sm text-red-800">
+    This listing cannot be hidden or republished in its current status.
+  </p>
+)}
                 </div>
               </article>
             ))}

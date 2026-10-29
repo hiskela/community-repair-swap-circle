@@ -80,7 +80,7 @@ export type Listing = {
   category: string;
   location?: string;
   wantedItem?: string;
-  status: 'open' | 'reserved' | 'closed';
+  status: 'open' | 'hidden'| 'reserved' | 'closed';
   createdAt?: string;
   owner?: { name?: string } | string;
 };
@@ -163,7 +163,19 @@ export function deleteListing(id: string, token: string) {
     },
   });
 }
-
+export function setListingVisibility(
+  id: string,
+  hidden: boolean,
+  token: string,
+) {
+  return request<Listing>(`/listings/${id}/visibility`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ hidden }),
+  });
+}
 export function createOffer(
   input: {
     listingId: string;

@@ -217,4 +217,42 @@ async remove(id: string, userId: string) {
 
   return { message: 'Listing deleted successfully' };
 }
+async setVisibility(
+  id: string,
+  userId: string,
+  hidden: boolean,
+) {
+  if (!isValidObjectId(id)) {
+    throw new BadRequestException('Invalid listing ID');
+  }
+
+  const listing = await this.listingModel.findById(id).exec();
+
+  if (!listing) {
+    throw new NotFoundException('Listing not found');
+  }
+
+  if (listing.owner.toString() !== userId) {
+    throw new ForbiddenException(
+      'You can only change your own listings',
+    );
+  }
+
+  if (
+    listing.status !== ListingStatus.OPEN &&
+    listing.status !== ListingStatus.HIDDEN
+  ) {
+    throw new BadRequestException(
+      'Only open or hidden listings can change visibility',
+    );
+  }
+
+  listing.status = hidden
+    ? ListingStatus.HIDDEN
+    : ListingStatus.OPEN;
+
+  await listing.save();
+
+  return listing;
+}
 }

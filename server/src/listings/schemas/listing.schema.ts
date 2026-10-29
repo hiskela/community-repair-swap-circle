@@ -12,6 +12,7 @@ export enum ListingType {
 
 export enum ListingStatus {
   OPEN = 'open',
+HIDDEN='hidden',
   RESERVED = 'reserved',
   CLOSED = 'closed',
 }

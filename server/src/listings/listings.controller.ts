@@ -22,6 +22,7 @@ import { CreateListingDto } from './dto/create-listing.dto';
 import { ListingsService } from './listings.service';
 import { UpdateListingDto } from './dto/update-listing.dto';
 import { SearchListingsDto } from './dto/search-listings.dto';
+import { SetListingVisibilityDto } from './dto/set-listing-visibility.dto';
 interface AuthenticatedRequest extends Request {
   user: {
     userId: string;
@@ -99,5 +100,19 @@ remove(
     request.user.userId,
   );
 }
-
+@Patch(':id/visibility')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
+@ApiOperation({ summary: 'Hide or republish your own listing' })
+setVisibility(
+  @Param('id') id: string,
+  @Body() dto: SetListingVisibilityDto,
+  @Req() request: AuthenticatedRequest,
+) {
+  return this.listingsService.setVisibility(
+    id,
+    request.user.userId,
+    dto.hidden,
+  );
+}
 }
