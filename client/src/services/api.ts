@@ -176,6 +176,7 @@ export function setListingVisibility(
     body: JSON.stringify({ hidden }),
   });
 }
+
 export function createOffer(
   input: {
     listingId: string;
@@ -257,7 +258,14 @@ export function rejectOffer(offerId: string, token: string) {
     },
   });
 }
-
+export function withdrawOffer(offerId: string, token: string) {
+  return request<Offer>(`/offers/${offerId}/withdraw`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
 export type TransactionStatus =
   | 'agreed'
   | 'in_progress'

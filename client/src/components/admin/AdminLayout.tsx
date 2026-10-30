@@ -23,8 +23,7 @@ export default function AdminLayout() {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 md:flex">
-      <aside className="w-full border-b border-slate-800 bg-slate-900 p-5 md:min-h-screen md:w-64 md:shrink-0 md:border-b-0 md:border-r">
-        <div className="mb-8">
+<aside className="w-full border-b border-slate-800 bg-slate-900 p-5 md:sticky md:top-16 md:h-[calc(100vh-4rem)] md:w-64 md:shrink-0 md:overflow-y-auto md:self-start md:border-b-0 md:border-r">        <div className="mb-8">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-400">
             Repair & Swap
           </p>

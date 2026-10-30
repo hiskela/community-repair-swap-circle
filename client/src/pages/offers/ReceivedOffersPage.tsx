@@ -6,8 +6,8 @@ import {
   getReceivedOffers,
   rejectOffer,
   type Offer,
-} from '../services/api';
-import { useAuth } from '../auth/AuthContext';
+} from '../../services/api';
+import { useAuth } from '../../auth/AuthContext';
 
 export default function ReceivedOffersPage() {
   const { token } = useAuth();

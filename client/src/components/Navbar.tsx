@@ -4,7 +4,7 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { getNotifications, type AppNotification } from '../services/api';
 
-const menus = [
+const userMenus = [
   {
     label: 'Listings',
     items: [
@@ -26,16 +26,22 @@ const menus = [
   },
 ];
 
+
+
 export default function Navbar() {
-  const { token, signOut } = useAuth();
+  const { token, role, signOut } = useAuth();
+
   const location = useLocation();
   const navigate = useNavigate();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
   const [unreadCount, setUnreadCount] = useState(0);
-const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
+  const isAdmin = token && role === 'admin';
+
+const menus = isAdmin ? [] : userMenus;
+  const dashboardPath = isAdmin ? '/admin' : '/dashboard';
 
   useEffect(() => {
     if (!token) {
@@ -65,8 +71,6 @@ const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const closeMenus = () => {
     setMobileMenuOpen(false);
     setExpandedMenu(null);
-  setOpenDropdown(null);
-
   };
 
   const handleLogout = () => {
@@ -90,7 +94,11 @@ const [openDropdown, setOpenDropdown] = useState<string | null>(null);
     }`;
 
   const menuIsActive = (items: { to: string; label: string }[]) =>
-    items.some((item) => location.pathname === item.to);
+    items.some(
+      (item) =>
+        location.pathname === item.to ||
+        (item.to !== '/admin' && location.pathname.startsWith(`${item.to}/`)),
+    );
 
   const renderDropdown = (
     label: string,
@@ -113,7 +121,7 @@ const [openDropdown, setOpenDropdown] = useState<string | null>(null);
         </span>
       </button>
 
-      <div className="invisible absolute left-0 top-full z-50 w-52 pt-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+      <div className="invisible absolute left-0 top-full z-50 w-56 pt-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
         <div className="rounded-xl border border-gray-100 bg-white p-2 shadow-xl shadow-gray-200/60">
           {children}
         </div>
@@ -185,7 +193,7 @@ const [openDropdown, setOpenDropdown] = useState<string | null>(null);
     <header className="sticky top-0 z-50 border-b border-emerald-100 bg-white/95 shadow-sm backdrop-blur">
       <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <Link
-          to="/"
+          to={token ? dashboardPath : '/'}
           onClick={closeMenus}
           className="flex min-w-0 items-center gap-2"
           aria-label="Repair and Swap Circle homepage"
@@ -221,7 +229,7 @@ const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
           {token ? (
             <>
-              <NavLink to="/dashboard" className={linkClass} end>
+              <NavLink to={dashboardPath} className={linkClass} end>
                 Dashboard
               </NavLink>
 
@@ -233,6 +241,7 @@ const [openDropdown, setOpenDropdown] = useState<string | null>(null);
                       key={item.to}
                       to={item.to}
                       end
+                      onClick={closeMenus}
                       className={dropdownLinkClass}
                     >
                       {item.label}
@@ -286,7 +295,7 @@ const [openDropdown, setOpenDropdown] = useState<string | null>(null);
             {token ? (
               <>
                 <NavLink
-                  to="/dashboard"
+                  to={dashboardPath}
                   className={linkClass}
                   end
                   onClick={closeMenus}

@@ -7,6 +7,7 @@ import {
   Param,
   UseGuards,
   Get,
+Req,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -67,4 +68,12 @@ export class OffersController {
   ) {
     return this.offersService.reject(id, req.user.userId);
   }
+@Patch(':id/withdraw')
+withdraw(
+  @Param('id') offerId: string,
+  @Req() req: { user: { userId: string } },
+) {
+  return this.offersService.withdraw(offerId, req.user.userId);
+}
+
 }

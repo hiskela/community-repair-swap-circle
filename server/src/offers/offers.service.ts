@@ -294,6 +294,67 @@ await this.notificationsService.create(
 
 return rejectedOffer;
 }
+async withdraw(offerId: string, userId: string) {
+  if (!isValidObjectId(offerId)) {
+    throw new NotFoundException('Offer not found');
+  }
+
+  const offer = await this.offerModel.findById(offerId).exec();
+
+  if (!offer) {
+    throw new NotFoundException('Offer not found');
+  }
+
+  if (offer.sender.toString() !== userId) {
+    throw new ForbiddenException(
+      'You can only withdraw your own offers',
+    );
+  }
+
+  if (offer.status !== OfferStatus.PENDING) {
+    throw new ConflictException(
+      'Only pending offers can be withdrawn',
+    );
+  }
+
+  const withdrawnOffer = await this.offerModel
+    .findOneAndUpdate(
+      {
+        _id: offer._id,
+        sender: new Types.ObjectId(userId),
+        status: OfferStatus.PENDING,
+      },
+      {
+        $set: { status: OfferStatus.WITHDRAWN },
+      },
+      { new: true },
+    )
+    .exec();
+
+  if (!withdrawnOffer) {
+    throw new ConflictException(
+      'This offer can no longer be withdrawn',
+    );
+  }
+
+  const listing = await this.listingModel
+    .findById(offer.listing)
+    .select('owner title')
+    .exec();
+
+  if (listing) {
+    await this.notificationsService.create(
+      listing.owner.toString(),
+      NotificationType.OFFER_WITHDRAWN,
+      `An offer for your listing "${listing.title}" has been withdrawn.`,
+      userId,
+      withdrawnOffer._id.toString(),
+      'offer',
+    );
+  }
+
+  return withdrawnOffer;
+}
 
 async findOne(offerId: string, userId: string) {
   if (!isValidObjectId(offerId)) {

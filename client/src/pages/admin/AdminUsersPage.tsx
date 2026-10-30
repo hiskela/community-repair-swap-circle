@@ -38,8 +38,6 @@ if (!token) {
       };
 
       const data = await getAdminUsers(token, filters);
-console.log('Users API response:', data);
-console.log('Is response an array:', Array.isArray(data));
       setUsers(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load users');

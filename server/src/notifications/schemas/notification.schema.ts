@@ -8,6 +8,7 @@ export enum NotificationType {
   OFFER_RECEIVED = 'offer_received',
   OFFER_ACCEPTED = 'offer_accepted',
   OFFER_REJECTED = 'offer_rejected',
+  OFFER_WITHDRAWN = 'offer_withdrawn',
   TRANSACTION_UPDATED = 'transaction_updated',
   DISPUTE_OPENED = 'dispute_opened',
   DISPUTE_RESOLVED = 'dispute_resolved',
