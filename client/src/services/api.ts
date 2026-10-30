@@ -662,4 +662,76 @@ export function updateAdminUserStatus(
     },
     body: JSON.stringify({ isActive }),
   });
+
+}
+export type AdminListing = {
+  _id: string;
+  title: string;
+  description: string;
+  type: 'need_repair' | 'available' | 'looking_for_parts';
+  category: string;
+  wantedItem?: string;
+  location?: string;
+  status: 'open' | 'hidden' | 'reserved' | 'closed';
+  owner: {
+    _id: string;
+    name: string;
+    email: string;
+  };
+  createdAt: string;
+  updatedAt?: string;
+};
+
+export type AdminListingsFilters = {
+  search?: string;
+  status?: AdminListing['status'];
+  type?: AdminListing['type'];
+  category?: string;
+};
+export function getAdminListings(
+  token: string,
+  filters: AdminListingsFilters = {},
+) {
+  const params = new URLSearchParams();
+
+  if (filters.search) params.set('search', filters.search);
+  if (filters.status) params.set('status', filters.status);
+  if (filters.type) params.set('type', filters.type);
+  if (filters.category) params.set('category', filters.category);
+
+  const query = params.toString();
+
+  return request<AdminListing[]>(
+    `/admin/listings${query ? `?${query}` : ''}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}
+
+export function getAdminListingById(id: string, token: string) {
+  return request<AdminListing>(`/admin/listings/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function updateAdminListingVisibility(
+  id: string,
+  hidden: boolean,
+  token: string,
+) {
+  return request<{
+    message: string;
+    listing: AdminListing;
+  }>(`/admin/listings/${id}/visibility`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ hidden }),
+  });
 }

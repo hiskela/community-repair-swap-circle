@@ -20,6 +20,9 @@ import { ResolveDisputeDto } from './dto/resolve-dispute.dto';
 import { TransactionStatus } from '../transactions/schemas/transaction.schema';
 import { AdminUsersQueryDto } from './dto/admin-users-query.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
+import { AdminListingsQueryDto } from './dto/admin-listings-query.dto';
+import { UpdateListingVisibilityDto } from './dto/update-listing-visibility.dto';
+
 type AuthenticatedRequest = Request & {
   user: {
     userId: string;
@@ -85,6 +88,29 @@ updateUserStatus(
     id,
     dto.isActive,
     req.user.userId,
+  );
+}
+@Get('listings')
+@ApiOperation({ summary: 'Get and filter all listings' })
+getListings(@Query() filters: AdminListingsQueryDto) {
+  return this.adminService.getListings(filters);
+}
+
+@Get('listings/:id')
+@ApiOperation({ summary: 'Get listing details' })
+getListingById(@Param('id') id: string) {
+  return this.adminService.getListingById(id);
+}
+
+@Patch('listings/:id/visibility')
+@ApiOperation({ summary: 'Hide or republish a listing' })
+updateListingVisibility(
+  @Param('id') id: string,
+  @Body() dto: UpdateListingVisibilityDto,
+) {
+  return this.adminService.updateListingVisibility(
+    id,
+    dto.hidden,
   );
 }
 }

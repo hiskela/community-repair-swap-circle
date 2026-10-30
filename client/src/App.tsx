@@ -21,6 +21,7 @@ import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminLayout from './components/admin/AdminLayout';
 import AdminDisputesPage from './pages/admin/AdminDisputesPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
+import AdminListingsPage from './pages/admin/AdminListingsPage';
 
 function AppRoutes() {
   const { token } = useAuth();
@@ -67,6 +68,7 @@ function AppRoutes() {
     <Route index element={<AdminDashboardPage />} />
 <Route path="disputes" element={<AdminDisputesPage />} />
 <Route path="users" element={<AdminUsersPage />} />
+<Route path="listings" element={<AdminListingsPage />} />
   </Route>
 </Route>
         {/* Catch-all redirect */}

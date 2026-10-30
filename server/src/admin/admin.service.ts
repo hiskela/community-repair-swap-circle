@@ -1,5 +1,5 @@
 
-import { Injectable, BadRequestException,ConflictException, NotFoundException } from '@nestjs/common';
+import { Injectable, BadRequestException ,ForbiddenException,ConflictException, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model,Types} from 'mongoose';
 import { User } from '../users/schemas/user.schema';
@@ -255,6 +255,99 @@ async updateUserStatus(
   return {
     message: `User ${isActive ? 'activated' : 'deactivated'} successfully`,
     user,
+  };
+}
+async getListings(filters: {
+  search?: string;
+  status?: ListingStatus;
+  type?: string;
+  category?: string;
+}) {
+  const query: any = {};
+
+  if (filters.search?.trim()) {
+    const search = filters.search.trim().replace(
+      /[.*+?^${}()|[\]\\]/g,
+      '\\$&',
+    );
+
+    query.$or = [
+      { title: { $regex: search, $options: 'i' } },
+      { description: { $regex: search, $options: 'i' } },
+      { category: { $regex: search, $options: 'i' } },
+    ];
+  }
+
+  if (filters.status) {
+    query.status = filters.status;
+  }
+
+  if (filters.type) {
+    query.type = filters.type;
+  }
+
+  if (filters.category?.trim()) {
+    const category = filters.category.trim().replace(
+      /[.*+?^${}()|[\]\\]/g,
+      '\\$&',
+    );
+
+    query.category = { $regex: category, $options: 'i' };
+  }
+
+  return this.listingModel
+    .find(query)
+    .populate('owner', 'name email')
+    .sort({ createdAt: -1 })
+    .exec();
+}
+
+async getListingById(listingId: string) {
+  if (!Types.ObjectId.isValid(listingId)) {
+    throw new BadRequestException('Invalid listing ID');
+  }
+
+  const listing = await this.listingModel
+    .findById(listingId)
+    .populate('owner', 'name email')
+    .exec();
+
+  if (!listing) {
+    throw new NotFoundException('Listing not found');
+  }
+
+  return listing;
+}
+
+async updateListingVisibility(listingId: string, hidden: boolean) {
+  if (!Types.ObjectId.isValid(listingId)) {
+    throw new BadRequestException('Invalid listing ID');
+  }
+
+  const listing = await this.listingModel.findById(listingId).exec();
+
+  if (!listing) {
+    throw new NotFoundException('Listing not found');
+  }
+
+  if (
+    listing.status !== ListingStatus.OPEN &&
+    listing.status !== ListingStatus.HIDDEN
+  ) {
+    throw new BadRequestException(
+      'Only open or hidden listings can change visibility',
+    );
+  }
+
+  listing.status = hidden
+    ? ListingStatus.HIDDEN
+    : ListingStatus.OPEN;
+
+  await listing.save();
+
+  return {
+    message: `Listing ${hidden ? 'hidden' : 'published'} successfully`,
+    listing,
   };
 }
 }
