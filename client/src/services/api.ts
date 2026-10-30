@@ -279,6 +279,12 @@ export function updateOffer(
     body: JSON.stringify({ message }),
   });
 }
+export function hideOffer(offerId: string, token: string) {
+  return request<{ message: string }>(`/offers/${offerId}/hide`, {
+    method: 'PATCH',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
 export type TransactionStatus =
   | 'agreed'
   | 'in_progress'

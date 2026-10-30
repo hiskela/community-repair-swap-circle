@@ -75,6 +75,17 @@ withdraw(
 ) {
   return this.offersService.withdraw(offerId, req.user.userId);
 }
+@Patch(':id/hide')
+@ApiOperation({ summary: 'Remove an offer from your sent offers list' })
+hide(
+  @Param('id') offerId: string,
+  @Req() req: { user: { userId: string } },
+) {
+  return this.offersService.hide(
+    offerId,
+    req.user.userId,
+  );
+}
 @Patch(':id')
 update(
   @Param('id') offerId: string,

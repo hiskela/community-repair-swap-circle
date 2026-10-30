@@ -117,7 +117,9 @@ return offer;
 
 async findSent(userId: string) {
   return this.offerModel
-    .find({ sender: new Types.ObjectId(userId) })
+    .find({ sender: new Types.ObjectId(userId),
+      isHiddenBySender: { $ne: true },
+ })
     .populate({
       path: 'listing',
       select: 'title type category location status',
@@ -125,7 +127,37 @@ async findSent(userId: string) {
     .sort({ createdAt: -1 })
     .exec();
 }
+async hide(offerId: string, userId: string) {
+  if (!Types.ObjectId.isValid(offerId)) {
+    throw new BadRequestException('Invalid offer ID');
+  }
 
+  const offer = await this.offerModel.findOne({
+    _id: new Types.ObjectId(offerId),
+    sender: new Types.ObjectId(userId),
+  });
+
+  if (!offer) {
+    throw new NotFoundException('Offer not found');
+  }
+
+  if (offer.status === OfferStatus.ACCEPTED) {
+    throw new BadRequestException(
+      'Accepted offers cannot be removed',
+    );
+  }
+
+  if (offer.isHiddenBySender) {
+    throw new BadRequestException('Offer is already removed');
+  }
+
+  offer.isHiddenBySender = true;
+  await offer.save();
+
+  return {
+    message: 'Offer removed successfully',
+  };
+}
 async findReceived(userId: string) {
   const listings = await this.listingModel
     .find({ owner: userId })

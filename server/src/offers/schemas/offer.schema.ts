@@ -40,6 +40,11 @@ export class Offer {
     default: OfferStatus.PENDING,
   })
   status: OfferStatus;
+ @Prop({
+    type: Boolean,
+    default: false,
+  })
+  isHiddenBySender: boolean;
 }
 
 export const OfferSchema = SchemaFactory.createForClass(Offer);

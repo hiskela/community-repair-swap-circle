@@ -5,6 +5,7 @@ import {
   getSentOffers,
   withdrawOffer,
 updateOffer,
+hideOffer,
   type Offer,
 } from '../../services/api';
 import { useAuth } from '../../auth/AuthContext';
@@ -24,6 +25,8 @@ export default function SentOffersPage() {
 const [editingOffer, setEditingOffer] = useState<Offer | null>(null);
 const [editedMessage, setEditedMessage] = useState('');
 const [savingEdit, setSavingEdit] = useState(false);
+const [removingId, setRemovingId] = useState<string | null>(null);
+
   const loadOffers = useCallback(async () => {
     if (!token) {
       setError('Please sign in to view your offers.');
@@ -105,6 +108,35 @@ async function handleUpdateOffer() {
     );
   } finally {
     setSavingEdit(false);
+  }
+}
+async function handleRemoveOffer(offerId: string) {
+  if (!token) return;
+
+  const confirmed = window.confirm(
+    'Remove this offer from your sent offers? It will remain visible to the listing owner.'
+  );
+
+  if (!confirmed) return;
+
+  try {
+    setRemovingId(offerId);
+    setActionError('');
+    setSuccess('');
+
+    await hideOffer(offerId, token);
+
+    setOffers((current) =>
+      current.filter((offer) => offer._id !== offerId)
+    );
+
+    setSuccess('Offer removed from your sent offers.');
+  } catch (err) {
+    setActionError(
+      err instanceof Error ? err.message : 'Failed to remove offer.'
+    );
+  } finally {
+    setRemovingId(null);
   }
 }
   function listingDetails(offer: Offer) {
@@ -285,11 +317,24 @@ async function handleUpdateOffer() {
                           )}
                         </div>
 
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusStyle(offer.status)}`}
-                        >
-                          {offer.status.replace('_', ' ')}
-                        </span>
+                    <div className="flex flex-wrap items-center gap-2">
+  <span
+    className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${statusStyle(offer.status)}`}
+  >
+    {offer.status.replace('_', ' ')}
+  </span>
+
+  {offer.status !== 'accepted' && (
+    <button
+      type="button"
+      onClick={() => handleRemoveOffer(offer._id)}
+      disabled={removingId === offer._id}
+      className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {removingId === offer._id ? 'Removing...' : 'Remove'}
+    </button>
+  )}
+</div>
                       </div>
 
                       <div className="mt-4 rounded-xl bg-slate-50 p-4">
@@ -343,6 +388,7 @@ async function handleUpdateOffer() {
                               : 'Withdraw offer'}
                           </button>
                         )}
+
                       </div>
                     </article>
                   );
