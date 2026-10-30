@@ -266,6 +266,19 @@ export function withdrawOffer(offerId: string, token: string) {
     },
   });
 }
+export function updateOffer(
+  offerId: string,
+  message: string,
+  token: string,
+) {
+  return request<Offer>(`/offers/${offerId}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ message }),
+  });
+}
 export type TransactionStatus =
   | 'agreed'
   | 'in_progress'

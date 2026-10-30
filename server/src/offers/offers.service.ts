@@ -389,4 +389,66 @@ async findOne(offerId: string, userId: string) {
   return offer;
 }
 
+async update(offerId: string, userId: string, message: string) {
+  if (!isValidObjectId(offerId)) {
+    throw new NotFoundException('Offer not found');
+  }
+
+  const offer = await this.offerModel.findById(offerId).exec();
+
+  if (!offer) {
+    throw new NotFoundException('Offer not found');
+  }
+
+  if (offer.sender.toString() !== userId) {
+    throw new ForbiddenException(
+      'You can only edit your own offers',
+    );
+  }
+
+  if (offer.status !== OfferStatus.PENDING) {
+    throw new ConflictException(
+      'Only pending offers can be edited',
+    );
+  }
+
+  const updatedOffer = await this.offerModel
+    .findOneAndUpdate(
+      {
+        _id: offer._id,
+        sender: new Types.ObjectId(userId),
+        status: OfferStatus.PENDING,
+      },
+      {
+        $set: { message: message.trim() },
+      },
+      { new: true, runValidators: true },
+    )
+    .exec();
+
+  if (!updatedOffer) {
+    throw new ConflictException(
+      'This offer can no longer be edited',
+    );
+  }
+
+  const listing = await this.listingModel
+    .findById(offer.listing)
+    .select('owner title')
+    .exec();
+
+  if (listing) {
+    await this.notificationsService.create(
+      listing.owner.toString(),
+      NotificationType.OFFER_UPDATED,
+      `An offer for your listing "${listing.title}" has been updated.`,
+      userId,
+      updatedOffer._id.toString(),
+      'offer',
+    );
+  }
+
+  return updatedOffer;
+}
+
 }

@@ -13,7 +13,7 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateOfferDto } from './dto/create-offer.dto';
 import { OffersService } from './offers.service';
-
+import { UpdateOfferDto } from './dto/update-offer.dto';
 @ApiTags('Offers')
 @ApiBearerAuth()
 @Controller('offers')
@@ -75,5 +75,16 @@ withdraw(
 ) {
   return this.offersService.withdraw(offerId, req.user.userId);
 }
-
+@Patch(':id')
+update(
+  @Param('id') offerId: string,
+  @Body() dto: UpdateOfferDto,
+  @Req() req: { user: { userId: string } },
+) {
+  return this.offersService.update(
+    offerId,
+    req.user.userId,
+    dto.message,
+  );
+}
 }

@@ -1,4 +1,3 @@
-
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 
@@ -9,6 +8,7 @@ export enum NotificationType {
   OFFER_ACCEPTED = 'offer_accepted',
   OFFER_REJECTED = 'offer_rejected',
   OFFER_WITHDRAWN = 'offer_withdrawn',
+  OFFER_UPDATED = 'offer_updated',
   TRANSACTION_UPDATED = 'transaction_updated',
   DISPUTE_OPENED = 'dispute_opened',
   DISPUTE_RESOLVED = 'dispute_resolved',
@@ -38,5 +38,4 @@ export class Notification {
   relatedType?: string;
 }
 
-export const NotificationSchema =
-  SchemaFactory.createForClass(Notification);
+export const NotificationSchema = SchemaFactory.createForClass(Notification);

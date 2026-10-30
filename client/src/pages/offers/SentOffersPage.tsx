@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import {
   getSentOffers,
   withdrawOffer,
+updateOffer,
   type Offer,
 } from '../../services/api';
 import { useAuth } from '../../auth/AuthContext';
@@ -20,7 +21,9 @@ export default function SentOffersPage() {
   const [error, setError] = useState('');
   const [actionError, setActionError] = useState('');
   const [success, setSuccess] = useState('');
-
+const [editingOffer, setEditingOffer] = useState<Offer | null>(null);
+const [editedMessage, setEditedMessage] = useState('');
+const [savingEdit, setSavingEdit] = useState(false);
   const loadOffers = useCallback(async () => {
     if (!token) {
       setError('Please sign in to view your offers.');
@@ -59,7 +62,51 @@ export default function SentOffersPage() {
         return 'bg-amber-50 text-amber-700';
     }
   }
+async function handleUpdateOffer() {
+  if (!token || !editingOffer) return;
 
+  const message = editedMessage.trim();
+
+  if (message.length < 10 || message.length > 1000) {
+    setActionError('Message must contain between 10 and 1000 characters.');
+    return;
+  }
+
+  try {
+    setSavingEdit(true);
+    setActionError('');
+    setSuccess('');
+
+    const updatedOffer = await updateOffer(
+      editingOffer._id,
+      message,
+      token,
+    );
+
+    setOffers((current) =>
+  current.map((offer) =>
+    offer._id === updatedOffer._id
+      ? {
+          ...offer,
+          message: updatedOffer.message,
+          status: updatedOffer.status,
+          createdAt: updatedOffer.createdAt ?? offer.createdAt,
+        }
+      : offer,
+  ),
+);
+
+    setEditingOffer(null);
+    setEditedMessage('');
+    setSuccess('Your offer has been updated successfully.');
+  } catch (err) {
+    setActionError(
+      err instanceof Error ? err.message : 'Failed to update offer.',
+    );
+  } finally {
+    setSavingEdit(false);
+  }
+}
   function listingDetails(offer: Offer) {
     const listing = offer.listing ?? offer.listingId;
 
@@ -270,7 +317,20 @@ export default function SentOffersPage() {
                             View listing →
                           </Link>
                         )}
-
+{offer.status === 'pending' && (
+  <button
+    type="button"
+    onClick={() => {
+      setEditingOffer(offer);
+      setEditedMessage(offer.message);
+      setActionError('');
+      setSuccess('');
+    }}
+    className="rounded-lg border border-emerald-200 px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
+  >
+    Edit offer
+  </button>
+)}
                         {offer.status === 'pending' && (
                           <button
                             type="button"
@@ -292,6 +352,63 @@ export default function SentOffersPage() {
           </>
         )}
       </div>
+{editingOffer && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 px-4 py-6">
+    <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+      <h2 className="text-xl font-bold text-slate-900">
+        Edit offer
+      </h2>
+
+      <p className="mt-2 text-sm text-slate-600">
+        Update the message you sent to the listing owner.
+      </p>
+
+      <textarea
+        value={editedMessage}
+        onChange={(e) => setEditedMessage(e.target.value)}
+        rows={5}
+        maxLength={1000}
+        className="mt-5 w-full rounded-xl border border-slate-300 p-3 text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+        placeholder="Write your offer message..."
+      />
+
+      <div className="mt-2 flex justify-between text-xs text-slate-500">
+        <span>Minimum 10 characters</span>
+        <span>{editedMessage.length}/1000</span>
+      </div>
+
+      {actionError && (
+        <p className="mt-3 text-sm text-red-600">
+          {actionError}
+        </p>
+      )}
+
+      <div className="mt-6 flex justify-end gap-3">
+        <button
+          type="button"
+          disabled={savingEdit}
+          onClick={() => {
+            setEditingOffer(null);
+            setEditedMessage('');
+            setActionError('');
+          }}
+          className="rounded-xl border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+        >
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          disabled={savingEdit || editedMessage.trim().length < 10}
+          onClick={handleUpdateOffer}
+          className="rounded-xl bg-emerald-700 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {savingEdit ? 'Saving...' : 'Save changes'}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
     </main>
   );
 }
