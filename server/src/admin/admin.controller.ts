@@ -7,6 +7,7 @@ import {
   Param,
   Req,
   Patch,
+Query,
   Request,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
@@ -17,7 +18,8 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/schemas/user.schema';
 import { ResolveDisputeDto } from './dto/resolve-dispute.dto';
 import { TransactionStatus } from '../transactions/schemas/transaction.schema';
-
+import { AdminUsersQueryDto } from './dto/admin-users-query.dto';
+import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 type AuthenticatedRequest = Request & {
   user: {
     userId: string;
@@ -60,4 +62,29 @@ export class AdminController {
       dto.notes,
     );
   }
+@Get('users')
+@ApiOperation({ summary: 'Get and filter all users' })
+getUsers(@Query() filters: AdminUsersQueryDto) {
+  return this.adminService.getUsers(filters);
+}
+
+@Get('users/:id')
+@ApiOperation({ summary: 'Get user details' })
+getUserById(@Param('id') id: string) {
+  return this.adminService.getUserById(id);
+}
+
+@Patch('users/:id/status')
+@ApiOperation({ summary: 'Activate or deactivate a user' })
+updateUserStatus(
+  @Param('id') id: string,
+  @Body() dto: UpdateUserStatusDto,
+  @Req() req: AuthenticatedRequest,
+) {
+  return this.adminService.updateUserStatus(
+    id,
+    dto.isActive,
+    req.user.userId,
+  );
+}
 }

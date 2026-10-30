@@ -169,4 +169,92 @@ async resolveDispute(
     'This transaction is not currently disputed or has already been resolved',
   );
 }
+async getUsers(filters: {
+  search?: string;
+  role?: string;
+  status?: string;
+}) {
+  const query: any = {};
+
+  if (filters.search?.trim()) {
+    const search = filters.search.trim().replace(
+      /[.*+?^${}()|[\]\\]/g,
+      '\\$&',
+    );
+
+    query.$or = [
+      { name: { $regex: search, $options: 'i' } },
+      { email: { $regex: search, $options: 'i' } },
+    ];
+  }
+
+  if (filters.role) {
+    query.role = filters.role;
+  }
+
+  if (filters.status) {
+    query.isActive = filters.status === 'active';
+  }
+
+  return this.userModel
+    .find(query)
+    .select('name email role location isEmailVerified isActive createdAt')
+    .sort({ createdAt: -1 })
+    .exec();
+}
+
+async getUserById(userId: string) {
+  if (!Types.ObjectId.isValid(userId)) {
+    throw new BadRequestException('Invalid user ID');
+  }
+
+  const user = await this.userModel
+    .findById(userId)
+    .select('name email role location isEmailVerified isActive createdAt updatedAt')
+    .exec();
+
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  return user;
+}
+
+async updateUserStatus(
+  userId: string,
+  isActive: boolean,
+  adminId: string,
+) {
+  if (!Types.ObjectId.isValid(userId)) {
+    throw new BadRequestException('Invalid user ID');
+  }
+
+  if (!Types.ObjectId.isValid(adminId)) {
+    throw new BadRequestException('Invalid administrator ID');
+  }
+
+  if (userId === adminId && !isActive) {
+    throw new BadRequestException(
+      'Administrators cannot deactivate their own account',
+    );
+  }
+
+  const user = await this.userModel
+    .findByIdAndUpdate(
+      userId,
+      { $set: { isActive } },
+      { new: true, runValidators: true },
+    )
+    .select('name email role isActive')
+    .exec();
+
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  return {
+    message: `User ${isActive ? 'activated' : 'deactivated'} successfully`,
+    user,
+  };
+}
 }

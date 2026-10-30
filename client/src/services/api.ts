@@ -592,5 +592,74 @@ export function resolveAdminDispute(
     },
     body: JSON.stringify({ decision, notes }),
   });
+
 }
 
+
+export type AdminUser = {
+  _id: string;
+  name: string;
+  email: string;
+  role: 'user' | 'admin';
+  location?: string;
+  isEmailVerified: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+export type AdminUsersFilters = {
+  search?: string;
+  role?: 'user' | 'admin';
+  status?: 'active' | 'inactive';
+};
+
+export function getAdminUsers(
+  token: string,
+  filters: AdminUsersFilters = {},
+) {
+  const params = new URLSearchParams();
+
+  if (filters.search) params.set('search', filters.search);
+  if (filters.role) params.set('role', filters.role);
+  if (filters.status) params.set('status', filters.status);
+
+  const query = params.toString();
+
+  return request<AdminUser[]>(
+    `/admin/users${query ? `?${query}` : ''}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}
+
+export function getAdminUserById(
+  id: string,
+  token: string,
+) {
+  return request<AdminUser>(`/admin/users/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function updateAdminUserStatus(
+  id: string,
+  isActive: boolean,
+  token: string,
+) {
+  return request<{
+    message: string;
+    user: AdminUser;
+  }>(`/admin/users/${id}/status`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ isActive }),
+  });
+}

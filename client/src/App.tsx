@@ -20,6 +20,8 @@ import NotificationsPage from './pages/NotificationsPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import AdminLayout from './components/admin/AdminLayout';
 import AdminDisputesPage from './pages/admin/AdminDisputesPage';
+import AdminUsersPage from './pages/admin/AdminUsersPage';
+
 function AppRoutes() {
   const { token } = useAuth();
 
@@ -64,6 +66,7 @@ function AppRoutes() {
   <Route path="/admin" element={<AdminLayout />}>
     <Route index element={<AdminDashboardPage />} />
 <Route path="disputes" element={<AdminDisputesPage />} />
+<Route path="users" element={<AdminUsersPage />} />
   </Route>
 </Route>
         {/* Catch-all redirect */}
