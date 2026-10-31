@@ -335,6 +335,8 @@ export type Transaction = {
   disputeReason?: string;
   resolutionNotes?: string;
 cancellationRequest?: CancellationRequest | null;
+requesterHidden?: boolean;
+providerHidden?: boolean;
   createdAt?: string;
 };
 
@@ -344,6 +346,20 @@ export function getMyTransactions(token: string) {
       Authorization: `Bearer ${token}`,
     },
   });
+}
+export function removeMyTransaction(
+  transactionId: string,
+  token: string,
+) {
+  return request<{ message: string }>(
+    `/transactions/${transactionId}/my-view`,
+    {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
 }
 export function getTransactionById(id: string, token: string) {
   return request<{

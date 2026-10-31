@@ -104,4 +104,14 @@ findOne(
 ) {
   return this.transactionsService.findOne(id, req.user.userId);
 }
+@Delete(':id/my-view')
+removeFromMyTransactions(
+  @Param('id') id: string,
+  @Request() req: { user: { userId: string } },
+) {
+  return this.transactionsService.removeFromMyTransactions(
+    id,
+    req.user.userId,
+  );
+}
 }

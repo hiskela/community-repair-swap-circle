@@ -1,4 +1,3 @@
-
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument, Types } from 'mongoose';
 
@@ -56,8 +55,9 @@ export class TransactionHistoryEntry {
   changedAt?: Date;
 }
 
-export const TransactionHistoryEntrySchema =
-  SchemaFactory.createForClass(TransactionHistoryEntry);
+export const TransactionHistoryEntrySchema = SchemaFactory.createForClass(
+  TransactionHistoryEntry,
+);
 
 @Schema({ timestamps: true })
 export class Transaction {
@@ -94,6 +94,13 @@ export class Transaction {
 
   @Prop({ type: String, maxlength: 1000 })
   resolutionNotes?: string;
+
+  @Prop({ type: Boolean, default: false })
+  requesterHidden: boolean;
+
+  @Prop({ type: Boolean, default: false })
+  providerHidden: boolean;
+
   @Prop({ type: CancellationRequestSchema, default: null })
   cancellationRequest?: CancellationRequest | null;
   @Prop({

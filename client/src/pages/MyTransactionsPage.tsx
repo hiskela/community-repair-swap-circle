@@ -8,11 +8,18 @@ import {
   requestTransactionCancellation,
   respondToCancellationRequest,
 createTransactionDispute,
+removeMyTransaction,
   type Transaction,
 } from '../services/api';
 import { useAuth } from '../auth/AuthContext';
 import TransactionCard from './transactions/TransactionCard';
-
+type TransactionFilter =
+  | 'all'
+  | 'agreed'
+  | 'in_progress'
+  | 'disputed'
+  | 'completed'
+  | 'cancelled';
 function getCurrentUserId(token: string): string {
   try {
     const payload = token.split('.')[1];
@@ -49,6 +56,9 @@ export default function MyTransactionsPage() {
   const [actionError, setActionError] = useState('');
   const [actioningId, setActioningId] = useState('');
   const [openCancellationForm, setOpenCancellationForm] = useState('');
+const [search, setSearch] = useState('');
+const [removingId, setRemovingId] = useState('');
+const [filter, setFilter] = useState<TransactionFilter>('all');
   const [cancellationReasons, setCancellationReasons] = useState<
     Record<string, string>
   >({});
@@ -57,7 +67,27 @@ const [disputeReasons, setDisputeReasons] = useState<
 >({});
 
   const currentUserId = getCurrentUserId(token ?? '');
+const transactionCounts = {
+  all: transactions.length,
+  agreed: transactions.filter((item) => item.status === 'agreed').length,
+  in_progress: transactions.filter(
+    (item) => item.status === 'in_progress',
+  ).length,
+  disputed: transactions.filter(
+    (item) => item.status === 'disputed',
+  ).length,
+  completed: transactions.filter(
+    (item) => item.status === 'completed',
+  ).length,
+  cancelled: transactions.filter(
+    (item) => item.status === 'cancelled',
+  ).length,
+};
 
+const filteredTransactions =
+  filter === 'all'
+    ? transactions
+    : transactions.filter((item) => item.status === filter);
   const loadTransactions = useCallback(async () => {
     if (!token) {
       setTransactions([]);
@@ -82,7 +112,61 @@ const [disputeReasons, setDisputeReasons] = useState<
       setLoading(false);
     }
   }, [token]);
+const searchedTransactions = filteredTransactions.filter(
+  (transaction) => {
+    const searchTerm = search.toLowerCase().trim();
 
+    if (!searchTerm) return true;
+
+    const title = transaction.listing?.title ?? '';
+    const requester = transaction.requester?.name ?? '';
+    const provider = transaction.provider?.name ?? '';
+
+    return (
+      title.toLowerCase().includes(searchTerm) ||
+      requester.toLowerCase().includes(searchTerm) ||
+      provider.toLowerCase().includes(searchTerm)
+    );
+  },
+);
+async function handleRemoveTransaction(transaction: Transaction) {
+  if (!token) return;
+
+  if (
+    transaction.status !== 'completed' &&
+    transaction.status !== 'cancelled'
+  ) {
+    setActionError(
+      'Only completed or cancelled transactions can be removed.',
+    );
+    return;
+  }
+
+  const confirmed = window.confirm(
+    'Remove this transaction from your list? The other participant will still be able to see it.',
+  );
+
+  if (!confirmed) return;
+
+  setRemovingId(transaction._id);
+  setActionError('');
+
+  try {
+    await removeMyTransaction(transaction._id, token);
+
+    setTransactions((current) =>
+      current.filter((item) => item._id !== transaction._id),
+    );
+  } catch (error) {
+    setActionError(
+      error instanceof Error
+        ? error.message
+        : 'Failed to remove transaction.',
+    );
+  } finally {
+    setRemovingId('');
+  }
+}
   useEffect(() => {
     void loadTransactions();
   }, [loadTransactions]);
@@ -275,15 +359,66 @@ async function handleRaiseDispute(transaction: Transaction) {
           {actionError}
         </div>
       )}
+<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+  {(
+    [
+      ['all', 'All'],
+      ['agreed', 'Agreed'],
+      ['in_progress', 'In Progress'],
+      ['disputed', 'Disputed'],
+      ['completed', 'Completed'],
+      ['cancelled', 'Cancelled'],
+    ] as const
+  ).map(([value, label]) => (
+    <button
+      key={value}
+      type="button"
+      onClick={() => setFilter(value)}
+      className={`rounded-xl border p-4 text-left transition ${
+        filter === value
+          ? 'border-emerald-600 bg-emerald-50 text-emerald-800'
+          : 'border-slate-200 bg-white text-slate-700 hover:border-emerald-300'
+      }`}
+    >
+      <span className="block text-sm font-medium">{label}</span>
+      <span className="mt-1 block text-2xl font-bold">
+        {transactionCounts[value]}
+      </span>
+    </button>
+  ))}
+</div>
+<div className="rounded-xl border border-slate-200 bg-white p-4">
+  <label
+    htmlFor="transaction-search"
+    className="mb-2 block text-sm font-medium text-slate-700"
+  >
+    Search transactions
+  </label>
 
-      {!pageError && transactions.length === 0 && (
+  <input
+    id="transaction-search"
+    type="search"
+    value={search}
+    onChange={(event) => setSearch(event.target.value)}
+    placeholder="Search by listing or participant name..."
+    className="w-full rounded-lg border border-slate-300 px-4 py-3 text-sm outline-none focus:border-emerald-600 focus:ring-2 focus:ring-emerald-100"
+  />
+</div>
+      {!pageError && searchedTransactions.length === 0 && (
         <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center">
-          <h2 className="text-xl font-semibold text-slate-900">
-            No transactions yet
-          </h2>
-          <p className="mt-2 text-slate-600">
-            Transactions will appear here when an offer is accepted.
-          </p>
+   <h2 className="text-xl font-semibold text-slate-900">
+  {transactions.length === 0
+    ? 'No transactions yet'
+    : search || filter !== 'all'
+      ? 'No matching transactions'
+      : 'No transactions available'}
+</h2>
+
+<p className="mt-2 text-slate-600">
+  {transactions.length === 0
+    ? 'Transactions will appear here when an offer is accepted.'
+    : 'There are no transactions in this status.'}
+</p>
           <Link
             to="/listings"
             className="mt-5 inline-block rounded-lg bg-emerald-700 px-5 py-2.5 font-semibold text-white hover:bg-emerald-800"
@@ -294,9 +429,22 @@ async function handleRaiseDispute(transaction: Transaction) {
       )}
 
      <div className="space-y-4">
-  {transactions.map((transaction) => (
-    <div key={transaction._id}>
-      <TransactionCard
+{searchedTransactions.map((transaction) => (    <div key={transaction._id}>
+      {(transaction.status === 'completed' ||
+  transaction.status === 'cancelled') && (
+  <div className="mt-3 flex justify-end">
+    <button
+      type="button"
+      onClick={() => void handleRemoveTransaction(transaction)}
+      disabled={removingId === transaction._id}
+      className="rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
+    >
+      {removingId === transaction._id
+        ? 'Removing...'
+        : 'Remove from my transactions'}
+    </button>
+  </div>
+)}<TransactionCard
         transaction={transaction}
         currentUserId={currentUserId}
         actioningId={actioningId}
@@ -333,7 +481,9 @@ async function handleRaiseDispute(transaction: Transaction) {
           setOpenCancellationForm('');
           setActionError('');
         }}
+
       />
+
 
       {(transaction.status === 'agreed' ||
         transaction.status === 'in_progress') && (

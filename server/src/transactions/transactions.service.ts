@@ -88,10 +88,14 @@ async findMyTransactions(userId: string) {
   return this.transactionModel
     .find({
       $or: [
-        { requester: userObjectId },
-        { provider: userObjectId },
-        { requester: userId },
-        { provider: userId },
+        {
+          requester: userObjectId,
+          requesterHidden: { $ne: true },
+        },
+        {
+          provider: userObjectId,
+          providerHidden: { $ne: true },
+        },
       ],
     })
     .populate('listing', 'title type category location status')
@@ -100,7 +104,66 @@ async findMyTransactions(userId: string) {
     .sort({ createdAt: -1 })
     .exec();
 }
+async removeFromMyTransactions(
+  transactionId: string,
+  userId: string,
+) {
+  if (!isValidObjectId(transactionId)) {
+    throw new BadRequestException('Invalid transaction ID');
+  }
 
+  const transaction = await this.transactionModel
+    .findById(transactionId)
+    .exec();
+
+  if (!transaction) {
+    throw new NotFoundException('Transaction not found');
+  }
+
+  const isRequester = transaction.requester.toString() === userId;
+  const isProvider = transaction.provider.toString() === userId;
+
+  if (!isRequester && !isProvider) {
+    throw new ForbiddenException(
+      'You can only remove your own transactions',
+    );
+  }
+
+  if (
+    transaction.status !== TransactionStatus.COMPLETED &&
+    transaction.status !== TransactionStatus.CANCELLED
+  ) {
+    throw new ConflictException(
+      'Only completed or cancelled transactions can be removed',
+    );
+  }
+
+  if (isRequester) {
+    if (transaction.requesterHidden) {
+      throw new ConflictException(
+        'Transaction is already removed from your list',
+      );
+    }
+
+    transaction.requesterHidden = true;
+  }
+
+  if (isProvider) {
+    if (transaction.providerHidden) {
+      throw new ConflictException(
+        'Transaction is already removed from your list',
+      );
+    }
+
+    transaction.providerHidden = true;
+  }
+
+  await transaction.save();
+
+  return {
+    message: 'Transaction removed from your list successfully',
+  };
+}
 async updateStatus(
   transactionId: string,
   userId: string,
