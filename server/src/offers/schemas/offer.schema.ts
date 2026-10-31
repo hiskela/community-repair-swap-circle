@@ -45,6 +45,11 @@ export class Offer {
     default: false,
   })
   isHiddenBySender: boolean;
+@Prop({
+  type: Boolean,
+  default: false,
+})
+isHiddenByReceiver: boolean;
 }
 
 export const OfferSchema = SchemaFactory.createForClass(Offer);

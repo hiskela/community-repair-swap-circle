@@ -167,7 +167,9 @@ async findReceived(userId: string) {
   const listingIds = listings.map((listing) => listing._id);
 
   return this.offerModel
-    .find({ listing: { $in: listingIds } })
+    .find({ listing: { $in: listingIds },
+isHiddenByReceiver: {$ne: true},
+ })
     .populate('sender', 'name')
     .populate({
       path: 'listing',
@@ -175,6 +177,43 @@ async findReceived(userId: string) {
     })
     .sort({ createdAt: -1 })
     .exec();
+}
+async hideReceived(offerId: string, userId: string) {
+  if (!isValidObjectId(offerId)) {
+    throw new BadRequestException('Invalid offer ID');
+  }
+
+  const offer = await this.offerModel
+    .findById(offerId)
+    .populate('listing')
+    .exec();
+
+  if (!offer) {
+    throw new NotFoundException('Offer not found');
+  }
+
+  const listing = offer.listing as unknown as ListingDocument;
+
+  if (!listing || listing.owner.toString() !== userId) {
+    throw new ForbiddenException(
+      'You can only remove offers received on your own listings',
+    );
+  }
+
+  if (offer.status === OfferStatus.ACCEPTED) {
+    throw new BadRequestException(
+      'Accepted offers cannot be removed from received offers',
+    );
+  }
+
+  if (offer.isHiddenByReceiver) {
+    throw new BadRequestException('Offer is already removed');
+  }
+
+  offer.isHiddenByReceiver = true;
+  await offer.save();
+
+  return { message: 'Offer removed from received offers successfully' };
 }
 async accept(offerId: string, userId: string) {
   if (!isValidObjectId(offerId)) {

@@ -98,4 +98,17 @@ update(
     dto.message,
   );
 }
+@Patch(':id/hide-received')
+@ApiOperation({
+  summary: 'Remove an offer from the received offers list',
+})
+hideReceived(
+  @Param('id') offerId: string,
+  @Req() req: { user: { userId: string } },
+) {
+  return this.offersService.hideReceived(
+    offerId,
+    req.user.userId,
+  );
+}
 }
