@@ -24,8 +24,8 @@ import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminListingsPage from './pages/admin/AdminListingsPage';
 
 function AppRoutes() {
-  const { token } = useAuth();
-
+  const { token, role } = useAuth();
+const defaultDashboard = role === 'admin' ? '/admin' : '/dashboard';
   return (
     <>
       <Navbar />
@@ -39,13 +39,25 @@ function AppRoutes() {
 
         {/* Auth pages — redirect to dashboard if already logged in */}
         <Route
-          path="/login"
-          element={token ? <Navigate to="/dashboard" replace /> : <LoginPage />}
-        />
-        <Route
-          path="/register"
-          element={token ? <Navigate to="/dashboard" replace /> : <RegisterPage />}
-        />
+  path="/login"
+  element={
+    token ? (
+      <Navigate to={defaultDashboard} replace />
+    ) : (
+      <LoginPage />
+    )
+  }
+/>
+      <Route
+  path="/register"
+  element={
+    token ? (
+      <Navigate to={defaultDashboard} replace />
+    ) : (
+      <RegisterPage />
+    )
+  }
+/>
 
         {/* Public listing browsing — no authentication required */}
         <Route path="/listings" element={<ListingsPage />} />

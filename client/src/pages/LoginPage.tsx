@@ -15,7 +15,7 @@ function getSafeRedirect(raw: string | null): string {
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { signIn } = useAuth();
+  const { signIn, role } = useAuth();
 
   const redirectTo = getSafeRedirect(
     new URLSearchParams(location.search).get('redirect'),
@@ -37,14 +37,22 @@ export default function LoginPage() {
 
     try {
       const result = await loginUser({ email: email.trim(), password });
-
-      if (!result.accessToken) {
+   if (!result.accessToken) {
         throw new Error('The server did not return an access token.');
       }
 
-      signIn(result);
-      navigate(redirectTo, { replace: true });
-    } catch (err) {
+    signIn(result);
+
+const destination =
+  result.user?.role === 'admin'
+    ? '/admin'
+    : '/dashboard';
+
+navigate(
+  redirectTo === '/dashboard' ? destination : redirectTo,
+  { replace: true },
+);
+} catch (err) {
       setError(
         err instanceof Error
           ? err.message
