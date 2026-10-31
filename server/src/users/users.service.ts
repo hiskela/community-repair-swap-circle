@@ -152,9 +152,12 @@ async requestEmailChange(
 ) {
   const normalizedEmail = newEmail.trim().toLowerCase();
 
+  // Remove expired pending email requests first.
+  await this.cleanupExpiredEmailChanges();
+
   const user = await this.userModel
     .findById(userId)
-    .select('+password')
+    .select('+password +pendingEmail')
     .exec();
 
   if (!user) {
@@ -257,5 +260,20 @@ async confirmEmailChange(userId: string, tokenHash: string) {
   ).exec();
 
   return result.modifiedCount === 1;
+}
+private async cleanupExpiredEmailChanges() {
+  await this.userModel.updateMany(
+    {
+      pendingEmail: { $type: 'string' },
+      emailChangeTokenExpiresAt: { $lte: new Date() },
+    },
+    {
+      $unset: {
+        pendingEmail: '',
+        emailChangeTokenHash: '',
+        emailChangeTokenExpiresAt: '',
+      },
+    },
+  ).exec();
 }
 }

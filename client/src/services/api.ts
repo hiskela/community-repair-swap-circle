@@ -792,12 +792,15 @@ export function updateAdminListingVisibility(
 
 }
 export type UserProfile = {
-  userId: string;
+  _id: string;
   name: string;
   email: string;
   role: 'user' | 'admin';
+  location?: string;
   isEmailVerified: boolean;
   isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export function getMyProfile(token: string) {
@@ -807,7 +810,12 @@ export function getMyProfile(token: string) {
     },
   });
 }
-
+export async function verifyEmail(token: string) {
+  return request<{ message: string }>(
+    `/auth/verify-email?token=${encodeURIComponent(token)}`,
+    { method: 'POST' },
+  );
+}
 export function requestEmailVerification(token: string) {
   return request<{ message: string }>('/auth/request-verification', {
     method: 'POST',

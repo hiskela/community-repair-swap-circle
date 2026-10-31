@@ -1,11 +1,12 @@
 
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as nodemailer from 'nodemailer';
 
 @Injectable()
 export class EmailService {
   private readonly transporter: nodemailer.Transporter;
+private readonly logger = new Logger(EmailService.name);
 
   constructor(private readonly configService: ConfigService) {
     this.transporter = nodemailer.createTransport({
@@ -39,11 +40,16 @@ export class EmailService {
           <p>This link expires in 15 minutes.</p>
         `,
       });
-    } catch {
-      throw new InternalServerErrorException(
-        'Unable to send verification email. Please try again later.',
-      );
-    }
+ } catch (error) {
+  this.logger.error(
+    'Failed to send verification email',
+    error instanceof Error ? error.stack : String(error),
+  );
+
+  throw new InternalServerErrorException(
+    'Unable to send verification email. Please try again later.',
+  );
+}
   }
 async sendEmailChangeVerification(email: string, token: string) {
   const appUrl =
@@ -67,10 +73,15 @@ async sendEmailChangeVerification(email: string, token: string) {
         <p>If you did not request this change, you can ignore this email.</p>
       `,
     });
-  } catch {
-    throw new InternalServerErrorException(
-      'Unable to send email-change verification. Please try again later.',
-    );
-  }
+ } catch (error) {
+  this.logger.error(
+    'Failed to send email-change verification',
+    error instanceof Error ? error.stack : String(error),
+  );
+
+  throw new InternalServerErrorException(
+    'Unable to send email-change verification. Please try again later.',
+  );
+}
 }
 }

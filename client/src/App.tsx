@@ -22,7 +22,9 @@ import AdminLayout from './components/admin/AdminLayout';
 import AdminDisputesPage from './pages/admin/AdminDisputesPage';
 import AdminUsersPage from './pages/admin/AdminUsersPage';
 import AdminListingsPage from './pages/admin/AdminListingsPage';
-
+import AccountSettingsPage from './pages/AccountSettingsPage';
+import ConfirmEmailChangePage from './pages/ConfirmEmailChangePage';
+import VerifyEmailPage from './pages/VerifyEmailPage';
 function AppRoutes() {
   const { token, role } = useAuth();
 const defaultDashboard = role === 'admin' ? '/admin' : '/dashboard';
@@ -62,7 +64,11 @@ const defaultDashboard = role === 'admin' ? '/admin' : '/dashboard';
         {/* Public listing browsing — no authentication required */}
         <Route path="/listings" element={<ListingsPage />} />
         <Route path="/listings/:id" element={<ListingDetailsPage />} />
-
+<Route path="/verify-email" element={<VerifyEmailPage />} />
+<Route
+  path="/confirm-email-change"
+  element={<ConfirmEmailChangePage />}
+/>
         {/* Protected routes — require authentication */}
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashboardPage />} />
@@ -74,6 +80,7 @@ const defaultDashboard = role === 'admin' ? '/admin' : '/dashboard';
           <Route path="/offers/received" element={<ReceivedOffersPage />} />
           <Route path="/transactions" element={<MyTransactionsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
+<Route path="/settings" element={<AccountSettingsPage />} />
         </Route>
 <Route element={<ProtectedRoute requiredRole="admin" />}>
   <Route path="/admin" element={<AdminLayout />}>
