@@ -51,9 +51,9 @@ const [visibilityId, setVisibilityId] = useState<string | null>(null);
   async function handleDelete(listing: Listing) {
     if (!token) return;
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${listing.title}"? This cannot be undone.`,
-    );
+   const confirmed = window.confirm(
+  `Are you sure you want to remove "${listing.title}"? It will disappear from your active listings, but its transaction history will be preserved.`,
+);
 
     if (!confirmed) return;
 

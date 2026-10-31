@@ -56,9 +56,10 @@ async findAll(searchDto: SearchListingsDto) {
     limit = 10,
   } = searchDto;
 
-  const filter: QueryFilter<ListingDocument> = {
-    status: ListingStatus.OPEN,
-  };
+const filter: QueryFilter<ListingDocument> = {
+  status: ListingStatus.OPEN,
+  isDeleted: { $ne: true },
+};
 
   if (type) {
     filter.type = type;
@@ -113,7 +114,9 @@ async findAll(searchDto: SearchListingsDto) {
 }
 async findMyListings(userId: string) {
   return this.listingModel
-    .find({ owner: userId })
+    .find({ owner: userId,
+      isDeleted: { $ne: true },
+})
     .populate('owner', 'name')
     .sort({ createdAt: -1 })
     .exec();
@@ -129,14 +132,22 @@ private escapeRegex(value: string): string {
     }
 
     const listing = await this.listingModel
-      .findOne({ _id: id, status: ListingStatus.OPEN })
+.findOne({
+  _id: id,
+  status: ListingStatus.OPEN,
+  isDeleted: { $ne: true },
+})
       .populate('owner', 'name')
       .exec();
 
     if (!listing) {
       throw new NotFoundException('Listing not found');
     }
-
+if (listing.isDeleted) {
+  throw new BadRequestException(
+    'This listing has already been deleted',
+  );
+}
     return listing;
   }
 
@@ -220,6 +231,15 @@ async remove(id: string, userId: string) {
     );
   }
 
+if (
+  listing.status !== ListingStatus.OPEN &&
+  listing.status !== ListingStatus.HIDDEN
+) {
+  throw new BadRequestException(
+    'Only open or hidden listings can be removed',
+  );
+}
+
   if (listing.status !== ListingStatus.OPEN) {
     throw new BadRequestException(
       'Only open listings can be deleted',
@@ -254,11 +274,15 @@ async remove(id: string, userId: string) {
     );
   }
 
-  await listing.deleteOne();
+  listing.isDeleted = true;
+  listing.deletedAt = new Date();
 
-  return { message: 'Listing deleted successfully' };
+  await listing.save();
+
+  return {
+    message: 'Listing removed successfully',
+  };
 }
-
 async setVisibility(
   id: string,
   userId: string,
@@ -273,7 +297,11 @@ async setVisibility(
   if (!listing) {
     throw new NotFoundException('Listing not found');
   }
-
+if (listing.isDeleted) {
+  throw new BadRequestException(
+    'Cannot change visibility of a deleted listing',
+  );
+}
   if (listing.owner.toString() !== userId) {
     throw new ForbiddenException(
       'You can only change your own listings',
