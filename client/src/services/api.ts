@@ -788,4 +788,52 @@ export function updateAdminListingVisibility(
     },
     body: JSON.stringify({ hidden }),
   });
+
+
+}
+export type UserProfile = {
+  userId: string;
+  name: string;
+  email: string;
+  role: 'user' | 'admin';
+  isEmailVerified: boolean;
+  isActive: boolean;
+};
+
+export function getMyProfile(token: string) {
+  return request<UserProfile>('/auth/profile', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function requestEmailVerification(token: string) {
+  return request<{ message: string }>('/auth/request-verification', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export function requestEmailChange(
+  newEmail: string,
+  password: string,
+  token: string,
+) {
+  return request<{ message: string }>('/auth/request-email-change', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ newEmail, password }),
+  });
+}
+
+export function confirmEmailChange(token: string) {
+  return request<{ message: string }>(
+    `/auth/confirm-email-change?token=${encodeURIComponent(token)}`,
+    { method: 'POST' },
+  );
 }

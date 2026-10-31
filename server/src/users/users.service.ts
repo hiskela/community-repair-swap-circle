@@ -2,7 +2,8 @@
 import {
   ConflictException,
   Injectable,
-NotFoundException
+NotFoundException,
+UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -142,5 +143,119 @@ async updateProfile(
 
   return user;
 }
+async requestEmailChange(
+  userId: string,
+  newEmail: string,
+  password: string,
+  tokenHash: string,
+  expiresAt: Date,
+) {
+  const normalizedEmail = newEmail.trim().toLowerCase();
 
+  const user = await this.userModel
+    .findById(userId)
+    .select('+password')
+    .exec();
+
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  const passwordMatches = await bcrypt.compare(
+    password,
+    user.password,
+  );
+
+  if (!passwordMatches) {
+    throw new UnauthorizedException('Incorrect password');
+  }
+
+  if (normalizedEmail === user.email) {
+    throw new ConflictException(
+      'New email address is the same as your current email',
+    );
+  }
+
+  const existingUser = await this.userModel
+    .findOne({
+      _id: { $ne: userId },
+      $or: [
+        { email: normalizedEmail },
+        { pendingEmail: normalizedEmail },
+      ],
+    })
+    .exec();
+
+  if (existingUser) {
+    throw new ConflictException(
+      'This email address is already in use or pending verification',
+    );
+  }
+
+  await this.userModel.updateOne(
+    { _id: userId },
+    {
+      $set: {
+        pendingEmail: normalizedEmail,
+        emailChangeTokenHash: tokenHash,
+        emailChangeTokenExpiresAt: expiresAt,
+      },
+    },
+  ).exec();
+
+  return {
+    message: 'A verification link has been sent to your new email address',
+  };
+}
+async findByEmailChangeTokenHash(tokenHash: string) {
+  return this.userModel
+    .findOne({
+      emailChangeTokenHash: tokenHash,
+      emailChangeTokenExpiresAt: { $gt: new Date() },
+      pendingEmail: { $exists: true },
+    })
+    .select(
+      '+emailChangeTokenHash +emailChangeTokenExpiresAt +pendingEmail',
+    )
+    .exec();
+}
+async confirmEmailChange(userId: string, tokenHash: string) {
+  const user = await this.userModel
+    .findOne({
+      _id: userId,
+      emailChangeTokenHash: tokenHash,
+      emailChangeTokenExpiresAt: { $gt: new Date() },
+      pendingEmail: { $exists: true },
+    })
+    .select('+emailChangeTokenHash +emailChangeTokenExpiresAt +pendingEmail')
+    .exec();
+
+  if (!user || !user.pendingEmail) {
+    return false;
+  }
+
+  const result = await this.userModel.updateOne(
+    {
+      _id: userId,
+      emailChangeTokenHash: tokenHash,
+      emailChangeTokenExpiresAt: { $gt: new Date() },
+      pendingEmail: user.pendingEmail,
+    },
+    {
+      $set: {
+        email: user.pendingEmail,
+        isEmailVerified: true,
+      },
+      $unset: {
+        pendingEmail: '',
+        emailChangeTokenHash: '',
+        emailChangeTokenExpiresAt: '',
+        emailVerificationTokenHash: '',
+        emailVerificationTokenExpiresAt: '',
+      },
+    },
+  ).exec();
+
+  return result.modifiedCount === 1;
+}
 }

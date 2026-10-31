@@ -30,9 +30,18 @@ export class User {
     default: UserRole.USER,
   })
   role: UserRole;
+  @Prop({ type: String, lowercase: true, trim: true, select: false })
+  pendingEmail?: string;
+
+  @Prop({ type: String, select: false })
+  emailChangeTokenHash?: string;
+
+  @Prop({ type: Date, select: false })
+  emailChangeTokenExpiresAt?: Date;
 
   @Prop({ default: false })
   isEmailVerified: boolean;
+
   @Prop({ type: String, select: false })
   emailVerificationTokenHash?: string;
 
@@ -45,3 +54,12 @@ export class User {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+UserSchema.index(
+  { pendingEmail: 1 },
+  {
+    unique: true,
+    partialFilterExpression: {
+      pendingEmail: { $type: 'string' },
+    },
+  },
+);
