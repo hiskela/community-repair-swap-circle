@@ -810,6 +810,18 @@ export function getMyProfile(token: string) {
     },
   });
 }
+export function updateMyProfile(
+  data: { name: string; location: string },
+  token: string,
+) {
+  return request<UserProfile>('/auth/profile', {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
+}
 export async function verifyEmail(token: string) {
   return request<{ message: string }>(
     `/auth/verify-email?token=${encodeURIComponent(token)}`,
@@ -844,4 +856,20 @@ export function confirmEmailChange(token: string) {
     `/auth/confirm-email-change?token=${encodeURIComponent(token)}`,
     { method: 'POST' },
   );
+}
+
+export function changePassword(
+  data: {
+    currentPassword: string;
+    newPassword: string;
+  },
+  token: string,
+) {
+  return request<{ message: string }>('/auth/change-password', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(data),
+  });
 }

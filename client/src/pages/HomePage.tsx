@@ -73,7 +73,7 @@ const benefits = [
 ];
 
 export default function HomePage() {
-  const { token } = useAuth();
+  const { token, role } = useAuth();
   const navigate = useNavigate();
 
   const [keyword, setKeyword] = useState('');
@@ -149,7 +149,14 @@ useEffect(() => {
           </p>
 
           <div className="mt-10 flex flex-wrap gap-4">
-            {token ? (
+            {token? (
+role==='admin'?
+<Link
+                to="/admin"
+                className="rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-emerald-950 shadow-lg transition hover:bg-emerald-50 hover:shadow-emerald-900/30"
+              >
+                Go to Dashboard →
+              </Link>:
               <Link
                 to="/dashboard"
                 className="rounded-xl bg-white px-6 py-3.5 text-sm font-bold text-emerald-950 shadow-lg transition hover:bg-emerald-50 hover:shadow-emerald-900/30"

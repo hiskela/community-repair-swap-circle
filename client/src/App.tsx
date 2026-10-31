@@ -25,6 +25,8 @@ import AdminListingsPage from './pages/admin/AdminListingsPage';
 import AccountSettingsPage from './pages/AccountSettingsPage';
 import ConfirmEmailChangePage from './pages/ConfirmEmailChangePage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
+import ProfilePage from './pages/ProfilePage';
+import SecurityPage from './pages/SecurityPage';
 function AppRoutes() {
   const { token, role } = useAuth();
 const defaultDashboard = role === 'admin' ? '/admin' : '/dashboard';
@@ -79,8 +81,16 @@ const defaultDashboard = role === 'admin' ? '/admin' : '/dashboard';
           <Route path="/offers/sent" element={<SentOffersPage />} />
           <Route path="/offers/received" element={<ReceivedOffersPage />} />
           <Route path="/transactions" element={<MyTransactionsPage />} />
+<Route path="/profile" element={<ProfilePage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
 <Route path="/settings" element={<AccountSettingsPage />} />
+<Route
+  path="/security"
+  element={
+      <SecurityPage />
+  
+  }
+/>
         </Route>
 <Route element={<ProtectedRoute requiredRole="admin" />}>
   <Route path="/admin" element={<AdminLayout />}>

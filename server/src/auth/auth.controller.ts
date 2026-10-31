@@ -3,10 +3,19 @@ import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
-import { Get, Req, UseGuards, Query } from '@nestjs/common';
+import {
+
+  Get,
+  Req,
+  UseGuards,
+  Query,
+  Patch,
+} from '@nestjs/common';
+import { UpdateProfileDto } from '../users/dto/update-profile.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { Request } from 'express';
 import { ChangeEmailDto } from './dto/change-email.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 interface AuthenticatedRequest extends Request {
   user: {
     userId: string;
@@ -32,6 +41,18 @@ async profile(@Req() request: AuthenticatedRequest) {
   
 
 return this.authService.getProfile(request.user.userId);
+}
+@Patch('profile')
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+async updateProfile(
+  @Req() request: AuthenticatedRequest,
+  @Body() updateProfileDto: UpdateProfileDto,
+) {
+  return this.authService.updateProfile(
+    request.user.userId,
+    updateProfileDto,
+  );
 }
 @Post('request-verification')
 @UseGuards(JwtAuthGuard)
@@ -63,5 +84,19 @@ requestEmailChange(
 confirmEmailChange(@Query('token') token: string) {
   return this.authService.confirmEmailChange(token);
 }
-
+@Post('change-password')
+@HttpCode(HttpStatus.OK)
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@ApiOperation({ summary: 'Change the authenticated user password' })
+changePassword(
+  @Req() request: AuthenticatedRequest,
+  @Body() dto: ChangePasswordDto,
+) {
+  return this.authService.changePassword(
+    request.user.userId,
+    dto.currentPassword,
+    dto.newPassword,
+  );
+}
 }

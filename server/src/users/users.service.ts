@@ -276,4 +276,42 @@ private async cleanupExpiredEmailChanges() {
     },
   ).exec();
 }
+async changePassword(
+  userId: string,
+  currentPassword: string,
+  newPassword: string,
+) {
+  const user = await this.userModel
+    .findById(userId)
+    .select('+password')
+    .exec();
+
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  const passwordMatches = await bcrypt.compare(
+    currentPassword,
+    user.password,
+  );
+
+  if (!passwordMatches) {
+    throw new UnauthorizedException('Current password is incorrect');
+  }
+
+  if (currentPassword === newPassword) {
+    throw new ConflictException(
+      'New password must be different from the current password',
+    );
+  }
+
+  const newHashedPassword = await bcrypt.hash(newPassword, 12);
+
+  user.password = newHashedPassword;
+  await user.save();
+
+  return {
+    message: 'Password changed successfully',
+  };
+}
 }

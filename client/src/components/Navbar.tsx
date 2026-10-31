@@ -26,8 +26,6 @@ const userMenus = [
   },
 ];
 
-
-
 export default function Navbar() {
   const { token, role, signOut } = useAuth();
 
@@ -40,8 +38,13 @@ export default function Navbar() {
 
   const isAdmin = token && role === 'admin';
 
-const menus = isAdmin ? [] : userMenus;
+  const menus = isAdmin ? [] : userMenus;
   const dashboardPath = isAdmin ? '/admin' : '/dashboard';
+
+  const isAccountActive =
+    location.pathname === '/profile' ||
+    location.pathname.startsWith('/settings') ||
+    location.pathname.startsWith('/security');
 
   useEffect(() => {
     if (!token) {
@@ -97,7 +100,8 @@ const menus = isAdmin ? [] : userMenus;
     items.some(
       (item) =>
         location.pathname === item.to ||
-        (item.to !== '/admin' && location.pathname.startsWith(`${item.to}/`)),
+        (item.to !== '/admin' &&
+          location.pathname.startsWith(`${item.to}/`)),
     );
 
   const renderDropdown = (
@@ -178,6 +182,26 @@ const menus = isAdmin ? [] : userMenus;
         My Profile
       </NavLink>
 
+      <NavLink
+        to="/settings"
+        className={dropdownLinkClass}
+        onClick={closeMenus}
+      >
+        <span className="mr-2">⚙️</span>
+        Account Settings
+      </NavLink>
+
+      <NavLink
+        to="/security"
+        className={dropdownLinkClass}
+        onClick={closeMenus}
+      >
+        <span className="mr-2">🔐</span>
+        Security
+      </NavLink>
+
+      <div className="my-2 border-t border-gray-100" />
+
       <button
         type="button"
         onClick={handleLogout}
@@ -251,11 +275,7 @@ const menus = isAdmin ? [] : userMenus;
                 ),
               )}
 
-              {renderDropdown(
-                'Account',
-                accountMenu,
-                location.pathname === '/profile',
-              )}
+              {renderDropdown('Account', accountMenu, isAccountActive)}
 
               <div className="ml-1">{notificationLink}</div>
             </>
@@ -351,6 +371,22 @@ const menus = isAdmin ? [] : userMenus;
                   onClick={closeMenus}
                 >
                   👤 My Profile
+                </NavLink>
+
+                <NavLink
+                  to="/settings"
+                  className={linkClass}
+                  onClick={closeMenus}
+                >
+                  ⚙️ Account Settings
+                </NavLink>
+
+                <NavLink
+                  to="/security"
+                  className={linkClass}
+                  onClick={closeMenus}
+                >
+                  🔐 Security
                 </NavLink>
 
                 <NavLink

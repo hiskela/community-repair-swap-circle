@@ -9,7 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
-
+import { UpdateProfileDto } from '../users/dto/update-profile.dto';
 import { createHash, randomBytes } from 'crypto';
 import { EmailService } from './email.service';
 
@@ -60,6 +60,23 @@ private readonly emailService:EmailService
       },
     };
   }
+async changePassword(
+  userId: string,
+  currentPassword: string,
+  newPassword: string,
+) {
+  return this.usersService.changePassword(
+    userId,
+    currentPassword,
+    newPassword,
+  );
+}
+async updateProfile(
+  userId: string,
+  updateProfileDto: UpdateProfileDto,
+) {
+  return this.usersService.updateProfile(userId, updateProfileDto);
+}
 
 async requestEmailVerification(userId: string, email: string) {
   const token = randomBytes(32).toString('hex');
