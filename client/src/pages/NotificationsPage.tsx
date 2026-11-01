@@ -34,6 +34,19 @@ function notificationLabel(type: AppNotification['type']) {
 
   return labels[type] ?? 'Notification';
 }
+
+function notificationSummary(notification: AppNotification) {
+  switch (notification.type) {
+    case 'transaction_updated':
+      return 'Your transaction has been updated. Open the details to see more.';
+    case 'dispute_opened':
+      return 'A dispute has been opened for this transaction.';
+    case 'dispute_resolved':
+      return 'Your transaction dispute has been resolved.';
+    default:
+      return notification.message;
+  }
+}
 type TransactionDetails = {
   _id: string;
   status: string;
@@ -330,7 +343,6 @@ useEffect(() => {
     typeof listingData === 'object' && listingData !== null
       ? listingData
       : null;
-
   return (
     <main className="min-h-screen bg-slate-50 text-slate-800">
       <div className="mx-auto max-w-4xl space-y-6 px-4 py-8 sm:px-6 sm:py-10">
@@ -440,8 +452,7 @@ useEffect(() => {
                       </div>
 
                       <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-700">
-                        {notification.message}
-                      </p>
+{notificationSummary(notification)}                      </p>
 
                       <p className="mt-3 text-xs text-slate-500">
                         {formatDate(notification.createdAt)}
@@ -480,14 +491,13 @@ useEffect(() => {
             }
           }}
         >
-          <section
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="notification-modal-title"
-            className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl"
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
+         <section
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="notification-modal-title"
+  className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
+>
+<div className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-200 p-6">              <div>
                 <h2
                   id="notification-modal-title"
                   className="text-xl font-bold text-slate-900"
@@ -509,14 +519,14 @@ useEffect(() => {
                 ×
               </button>
             </div>
+<div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-4">
 
             <div className="mt-5 rounded-xl bg-slate-50 p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                 Notification
               </p>
               <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-7 text-slate-700">
-                {selectedNotification.message}
-              </p>
+{notificationSummary(selectedNotification)}              </p>
             </div>
 
             {selectedNotification.relatedType === 'offer' && (
@@ -638,60 +648,16 @@ useEffect(() => {
       </div>
     )}
 
-    {selectedTransaction.cancellationRequest && (
-      <div>
-        <p className="text-sm font-semibold text-slate-800">
-          Cancellation request
-        </p>
-        <p className="mt-1 text-sm text-slate-700">
-          Status: {selectedTransaction.cancellationRequest.status}
-        </p>
-        <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-700">
-          Reason: {selectedTransaction.cancellationRequest.reason}
-        </p>
-      </div>
-    )}
+  
 
-    <div>
-      <h4 className="text-sm font-semibold text-slate-800">
-        Transaction history
-      </h4>
-
-      <div className="mt-2 space-y-3">
-        {selectedTransaction.history?.length ? (
-          selectedTransaction.history.map((entry, index) => (
-            <div
-              key={`${entry.status}-${index}`}
-              className="rounded-lg bg-slate-50 p-3"
-            >
-              <p className="text-sm font-semibold capitalize text-slate-800">
-                {entry.status.replaceAll('_', ' ')}
-              </p>
-              <p className="mt-1 whitespace-pre-wrap break-words text-sm text-slate-600">
-                {entry.note}
-              </p>
-              {entry.changedAt && (
-                <p className="mt-1 text-xs text-slate-500">
-                  {formatDate(entry.changedAt)}
-                </p>
-              )}
-            </div>
-          ))
-        ) : (
-          <p className="text-sm text-slate-500">
-            No transaction history is available.
-          </p>
-        )}
-      </div>
-    </div>
+   
   </div>
 )}
             <p className="mt-3 text-xs text-slate-500">
               Status: {selectedNotification.isRead ? 'Read' : 'Unread'}
             </p>
-
-            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-              <button
+</div>
+<div className="flex shrink-0 flex-col-reverse gap-3 border-t border-slate-200 bg-white p-6 sm:flex-row sm:justify-end">              <button
                 type="button"
                 onClick={() => setSelectedNotification(null)}
                 disabled={deleting}
@@ -699,7 +665,6 @@ useEffect(() => {
               >
                 Close
               </button>
-
               <button
                 type="button"
                 onClick={() => void handleDelete()}

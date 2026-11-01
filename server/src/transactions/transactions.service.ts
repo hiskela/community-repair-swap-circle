@@ -68,19 +68,19 @@ export class TransactionsService {
     }
 
     return this.transactionModel.create({
-      offer: offer._id,
-      listing: offer.listing,
-      requester: offer.sender,
-      provider: listing.owner,
+  offer: offer._id,
+  listing: offer.listing,
+  requester: new Types.ObjectId(offer.sender.toString()),
+  provider: new Types.ObjectId(listing.owner.toString()),
+  status: TransactionStatus.AGREED,
+  history: [
+    {
       status: TransactionStatus.AGREED,
-history: [
-  {
-    status: TransactionStatus.AGREED,
-    changedBy: offer.sender,
-    note: 'Transaction created after offer acceptance',
-  },
-],
-    });
+      changedBy: new Types.ObjectId(offer.sender.toString()),
+      note: 'Transaction created after offer acceptance',
+    },
+  ],
+});
   }
 async findMyTransactions(userId: string) {
   const userObjectId = new Types.ObjectId(userId);
