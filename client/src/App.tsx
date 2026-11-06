@@ -27,6 +27,7 @@ import ConfirmEmailChangePage from './pages/ConfirmEmailChangePage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import ProfilePage from './pages/ProfilePage';
 import SecurityPage from './pages/SecurityPage';
+import AdminReportsPage from './pages/admin/AdminReportsPage';
 function AppRoutes() {
   const { token, role } = useAuth();
 const defaultDashboard = role === 'admin' ? '/admin' : '/dashboard';
@@ -98,6 +99,7 @@ const defaultDashboard = role === 'admin' ? '/admin' : '/dashboard';
 <Route path="disputes" element={<AdminDisputesPage />} />
 <Route path="users" element={<AdminUsersPage />} />
 <Route path="listings" element={<AdminListingsPage />} />
+<Route path="reports" element={<AdminReportsPage />} />
   </Route>
 </Route>
         {/* Catch-all redirect */}

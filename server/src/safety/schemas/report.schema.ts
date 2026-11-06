@@ -39,3 +39,33 @@ export class Report {
 }
 
 export const ReportSchema = SchemaFactory.createForClass(Report);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

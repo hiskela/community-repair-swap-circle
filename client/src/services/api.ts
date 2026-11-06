@@ -873,3 +873,60 @@ export function changePassword(
     body: JSON.stringify(data),
   });
 }
+export type AdminReport = {
+  _id: string;
+  reporter:
+    | {
+        _id: string;
+        name: string;
+        email: string;
+      }
+    | string;
+  targetType: 'user' | 'listing';
+  targetId:
+    | string
+    | {
+        _id: string;
+        title?: string;
+        name?: string;
+      };
+  reason: string;
+  status: 'pending' | 'reviewed' | 'dismissed';
+  reviewedBy?:
+    | {
+        _id: string;
+        name: string;
+      }
+    | string;
+  adminNotes?: string;
+  createdAt: string;
+  updatedAt?: string;
+};
+
+export async function getAdminReports(
+  token: string,
+): Promise<AdminReport[]> {
+  return request<AdminReport[]>('/safety/admin/reports', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}
+
+export async function moderateAdminReport(
+  id: string,
+  status: 'reviewed' | 'dismissed',
+  adminNotes: string,
+  token: string,
+): Promise<AdminReport> {
+  return request<AdminReport>(`/safety/admin/reports/${id}`, {
+    method: 'PATCH',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      status,
+      adminNotes,
+    }),
+  });
+}

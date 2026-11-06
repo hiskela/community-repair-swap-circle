@@ -14,6 +14,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { SafetyModule } from './safety/safety.module';
 import { MessagesModule } from './messages/messages.module';
+import { ReportsModule } from './reports/reports.module';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -36,6 +37,7 @@ NotificationsModule,
 ReviewsModule,
 SafetyModule,
 MessagesModule,
+ReportsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
