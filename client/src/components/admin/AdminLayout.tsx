@@ -9,7 +9,7 @@ const navigation = [
   { label: 'Listings', path: '/admin/listings', icon: '▤' },
   { label: 'Users', path: '/admin/users', icon: '♙' },
   { label: 'Transactions', path: '/admin/transactions', icon: '⇄' },
-  { label: 'Activity Log', path: '/admin/activity', icon: '◷' },
+  { label: 'Activity Log', path: '/admin/activity-logs', icon: '◷' },
 ];
 
 export default function AdminLayout() {

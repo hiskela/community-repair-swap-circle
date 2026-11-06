@@ -5,6 +5,8 @@ import { AdminController } from './admin.controller';
 import { AdminService } from './admin.service';
 import { User, UserSchema } from '../users/schemas/user.schema';
 import { Listing, ListingSchema } from '../listings/schemas/listing.schema';
+import { ActivityLog } from '../activity-logs/schemas/activity-log.schema';
+import { ActivityLogsModule } from '../activity-logs/activity-logs.module';
 import {
   Transaction,
   TransactionSchema,
@@ -21,6 +23,8 @@ import { AuthModule } from '../auth/auth.module';
       { name: Transaction.name, schema: TransactionSchema },
       { name: Report.name, schema: ReportSchema },
     ]),
+ActivityLog,
+ActivityLogsModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],

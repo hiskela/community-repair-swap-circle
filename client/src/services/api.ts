@@ -977,3 +977,55 @@ export async function getAdminTransactions(
     },
   });
 }
+export type AdminActivityLog = {
+  _id: string;
+  actorId: {
+    _id: string;
+    name: string;
+    email: string;
+  } | null;
+  actorRole: string;
+  action: string;
+  resource: string;
+  description: string;
+  method: string;
+  endpoint: string;
+  ipAddress?: string;
+  userAgent?: string;
+  createdAt: string;
+};
+
+export type AdminActivityLogsResponse = {
+  data: AdminActivityLog[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+};
+
+export async function getAdminActivityLogs(
+  token: string,
+  filters: {
+    page?: number;
+    limit?: number;
+    action?: string;
+    resource?: string;
+  } = {},
+): Promise<AdminActivityLogsResponse> {
+  const params = new URLSearchParams();
+
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value !== undefined && value !== '') {
+      params.append(key, String(value));
+    }
+  });
+
+  return request<AdminActivityLogsResponse>(
+    `/admin/activity-logs?${params.toString()}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  );
+}

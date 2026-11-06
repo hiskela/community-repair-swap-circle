@@ -22,6 +22,8 @@ import { AdminUsersQueryDto } from './dto/admin-users-query.dto';
 import { UpdateUserStatusDto } from './dto/update-user-status.dto';
 import { AdminListingsQueryDto } from './dto/admin-listings-query.dto';
 import { UpdateListingVisibilityDto } from './dto/update-listing-visibility.dto';
+import { ActivityLogsService } from '../activity-logs/activity-logs.service';
+
 
 type AuthenticatedRequest = Request & {
   user: {
@@ -37,8 +39,9 @@ type AuthenticatedRequest = Request & {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(UserRole.ADMIN)
 export class AdminController {
-  constructor(private readonly adminService: AdminService) {}
-
+  constructor(private readonly adminService: AdminService,
+  private readonly activityLogsService: ActivityLogsService,
+) {}
   @Get('overview')
   @ApiOperation({ summary: 'Get admin dashboard statistics' })
   getOverview() {
@@ -123,5 +126,26 @@ getTransactions(
   @Query('status') status?: TransactionStatus,
 ) {
   return this.adminService.getTransactions(status);
+}
+@Get('activity-logs')
+@ApiOperation({ summary: 'Get platform activity logs' })
+@ApiResponse({
+  status: 200,
+  description: 'Activity logs retrieved successfully',
+})
+getActivityLogs(
+  @Query('page') page?: string,
+  @Query('limit') limit?: string,
+  @Query('action') action?: string,
+  @Query('resource') resource?: string,
+  @Query('actorId') actorId?: string,
+) {
+  return this.activityLogsService.findAll({
+    page: Number(page) || 1,
+    limit: Number(limit) || 20,
+    action,
+    resource,
+    actorId,
+  });
 }
 }
