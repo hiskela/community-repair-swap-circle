@@ -28,6 +28,7 @@ import VerifyEmailPage from './pages/VerifyEmailPage';
 import ProfilePage from './pages/ProfilePage';
 import SecurityPage from './pages/SecurityPage';
 import AdminReportsPage from './pages/admin/AdminReportsPage';
+import AdminTransactionsPage from './pages/admin/AdminTransactionsPage';
 function AppRoutes() {
   const { token, role } = useAuth();
 const defaultDashboard = role === 'admin' ? '/admin' : '/dashboard';
@@ -100,6 +101,7 @@ const defaultDashboard = role === 'admin' ? '/admin' : '/dashboard';
 <Route path="users" element={<AdminUsersPage />} />
 <Route path="listings" element={<AdminListingsPage />} />
 <Route path="reports" element={<AdminReportsPage />} />
+<Route path="transactions" element={<AdminTransactionsPage />} />
   </Route>
 </Route>
         {/* Catch-all redirect */}

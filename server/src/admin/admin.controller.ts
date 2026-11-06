@@ -10,7 +10,7 @@ import {
 Query,
   Request,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiTags, ApiResponse } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -112,5 +112,16 @@ updateListingVisibility(
     id,
     dto.hidden,
   );
+}
+@Get('transactions')
+@ApiOperation({ summary: 'Get all transactions for administration' })
+@ApiResponse({
+  status: 200,
+  description: 'Transactions retrieved successfully',
+})
+getTransactions(
+  @Query('status') status?: TransactionStatus,
+) {
+  return this.adminService.getTransactions(status);
 }
 }

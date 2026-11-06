@@ -930,3 +930,50 @@ export async function moderateAdminReport(
     }),
   });
 }
+export type AdminTransaction = {
+  _id: string;
+  listing: {
+    _id: string;
+    title: string;
+    type: string;
+    category: string;
+    location?: string;
+  } | null;
+  requester: {
+    _id: string;
+    name: string;
+    email: string;
+  } | null;
+  provider: {
+    _id: string;
+    name: string;
+    email: string;
+  } | null;
+  status: string;
+  history?: {
+    status: string;
+    changedBy?: {
+      name: string;
+      email: string;
+    };
+    note?: string;
+    createdAt?: string;
+  }[];
+  createdAt: string;
+  updatedAt: string;
+};
+
+export async function getAdminTransactions(
+  token: string,
+  status?: string,
+): Promise<AdminTransaction[]> {
+  const query = status
+    ? `?status=${encodeURIComponent(status)}`
+    : '';
+
+  return request<AdminTransaction[]>(`/admin/transactions${query}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}

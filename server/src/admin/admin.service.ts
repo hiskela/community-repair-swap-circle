@@ -350,4 +350,24 @@ async updateListingVisibility(listingId: string, hidden: boolean) {
     listing,
   };
 }
+async getTransactions(status?: TransactionStatus) {
+  const filter: Record<string, unknown> = {};
+
+  if (status) {
+    if (!Object.values(TransactionStatus).includes(status)) {
+      throw new BadRequestException('Invalid transaction status');
+    }
+
+    filter.status = status;
+  }
+
+  return this.transactionModel
+    .find(filter)
+    .populate('listing', 'title type category location')
+    .populate('requester', 'name email')
+    .populate('provider', 'name email')
+    .populate('history.changedBy', 'name email')
+    .sort({ updatedAt: -1 })
+    .exec();
+}
 }
